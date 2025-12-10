@@ -1,0 +1,113 @@
+import { motion } from 'framer-motion';
+import {
+  FaReact,
+  FaNodeJs,
+  FaPython,
+  FaJs,
+  FaHtml5,
+  FaCss3Alt,
+  FaGitAlt,
+  FaDocker,
+  FaAws,
+  FaDatabase,
+  FaPhp,
+} from 'react-icons/fa';
+import { SiTypescript, SiMongodb, SiPostgresql, SiPhp } from 'react-icons/si';
+import { RiNextjsFill } from "react-icons/ri";
+
+const Skills = () => {
+
+  const skillCategories = [
+    {
+      title: 'Frontend',
+      skills: [
+        { name: 'React', icon: <FaReact />, level: 90 },
+        { name: 'JavaScript', icon: <FaJs />, level: 95 },
+        { name: 'TypeScript', icon: <SiTypescript />, level: 85 },
+        { name: 'HTML5', icon: <FaHtml5 />, level: 95 },
+        { name: 'CSS3', icon: <FaCss3Alt />, level: 90 },
+      ],
+    },
+    {
+      title: 'Backend',
+      skills: [
+        { name: 'Node.js', icon: <FaNodeJs />, level: 90 },
+        { name: 'Python', icon: <FaPython />, level: 85 },
+        
+        { name: 'PHP', icon: <SiPhp />, level: 85 },
+        {name:'NextJS', icon: <RiNextjsFill/>, level: 75},
+      ],
+    },
+    {
+      title: 'Tools & Others',
+      skills: [
+        { name: 'Git', icon: <FaGitAlt />, level: 90 },
+        { name: 'Docker', icon: <FaDocker />, level: 80 },
+       
+        { name: 'MongoDB', icon: <SiMongodb />, level: 80 },
+        { name: 'PostgreSQL', icon: <SiPostgresql />, level: 85 },
+        { name: 'AWS', icon: <FaAws />, level: 75 },
+      ],
+    },
+  ];
+
+  return (
+    <section id="skills" className="skills">
+      <div className="container">
+        <motion.h2
+          className="section-title"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          Skills & Technologies
+        </motion.h2>
+        <div className="skills-grid">
+          {skillCategories.map((category, categoryIndex) => (
+            <motion.div
+              key={category.title}
+              className="skill-category"
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: categoryIndex * 0.2 }}
+            >
+              <h3>{category.title}</h3>
+              <div className="skills-list">
+                {category.skills.map((skill, skillIndex) => (
+                  <motion.div
+                    key={skill.name}
+                    className="skill-item"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: categoryIndex * 0.2 + skillIndex * 0.1 }}
+                  >
+                    <div className="skill-header">
+                      <div className="skill-icon">{skill.icon}</div>
+                      <span className="skill-name">{skill.name}</span>
+                      <span className="skill-percentage">{skill.level}%</span>
+                    </div>
+                    <div className="skill-bar">
+                      <motion.div
+                        className="skill-progress"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${skill.level}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1, delay: categoryIndex * 0.2 + skillIndex * 0.1 + 0.3 }}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Skills;
+
