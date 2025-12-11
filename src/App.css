@@ -1,5 +1,9 @@
-/* CSS Variables for Light Mode */
-:root[data-theme='light'] {
+/* Default/Light Mode - Fallback if data-theme is not set */
+:root,
+:root:not([data-theme]),
+:root[data-theme='light'],
+html[data-theme='light'],
+html:not([data-theme]) {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #e9ecef;
@@ -17,7 +21,8 @@
 }
 
 /* CSS Variables for Dark Mode */
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+html[data-theme='dark'] {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
