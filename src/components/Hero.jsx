@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaDownload } from 'react-icons/fa';
 import resumePdf from '../assets/Marshal-Johnsan_Resume (1).pdf';
+import profileImage from '../assets/profile.jpeg';
 
 const Hero = () => {
   const containerVariants = {
@@ -109,7 +110,7 @@ const Hero = () => {
         }}
       >
         <motion.img
-          src="/src/assets/profile.jpeg"   
+          src={profileImage}
           alt="Profile"
           className="profile-photo"
           initial={{ opacity: 0, scale: 0.9 }}
