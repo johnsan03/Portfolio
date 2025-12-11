@@ -13,8 +13,9 @@ const Background3D = () => {
     let animationFrameId;
     let particles = [];
     let shapes = [];
-    let mouseX = 0;
-    let mouseY = 0;
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let scrollY = 0;
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -31,72 +32,100 @@ const Background3D = () => {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
+    // Track scroll to adjust animation
+    const handleScroll = () => {
+      scrollY = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     const primaryColor = isDark ? 'rgba(129, 140, 248, ' : 'rgba(99, 102, 241, ';
     const secondaryColor = isDark ? 'rgba(167, 139, 250, ' : 'rgba(139, 92, 246, ';
+    const tertiaryColor = isDark ? 'rgba(59, 130, 246, ' : 'rgba(37, 99, 235, ';
 
-    // Enhanced 3D Particle class
+    // Enhanced 3D Particle class with better depth management
     class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.z = Math.random() * 2000;
-        this.size = Math.random() * 3 + 1;
-        this.speedZ = Math.random() * 2 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.5;
-        this.speedY = (Math.random() - 0.5) * 0.5;
-        // Higher opacity in light mode for better visibility
+        this.z = Math.random() * 1800 + 200; // Keep particles between 200-2000 (away from camera)
+        this.baseSize = Math.random() * 2.5 + 1;
+        this.speedZ = Math.random() * 1.5 + 0.3;
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.speedY = (Math.random() - 0.5) * 0.3;
         this.opacity = isDark 
-          ? Math.random() * 0.5 + 0.3
-          : Math.random() * 0.4 + 0.5;
-        this.color = Math.random() > 0.5 
-          ? primaryColor + this.opacity + ')'
-          : secondaryColor + this.opacity + ')';
+          ? Math.random() * 0.4 + 0.25
+          : Math.random() * 0.35 + 0.45;
+        // More color variety
+        const colorRand = Math.random();
+        if (colorRand < 0.4) {
+          this.color = primaryColor + this.opacity + ')';
+        } else if (colorRand < 0.8) {
+          this.color = secondaryColor + this.opacity + ')';
+        } else {
+          this.color = tertiaryColor + this.opacity + ')';
+        }
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.pulseSpeed = Math.random() * 0.02 + 0.01;
       }
 
       update() {
         this.z -= this.speedZ;
         this.x += this.speedX;
         this.y += this.speedY;
+        this.pulsePhase += this.pulseSpeed;
 
-        // Mouse interaction - prevent division by zero
+        // Subtle mouse interaction - more refined
         const dx = mouseX - this.x;
         const dy = mouseY - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance > 0 && distance < 200) {
-          this.x -= (dx / distance) * 2;
-          this.y -= (dy / distance) * 2;
+        if (distance > 0 && distance < 150) {
+          const force = (1 - distance / 150) * 1.5;
+          this.x -= (dx / distance) * force;
+          this.y -= (dy / distance) * force;
         }
 
-        if (this.z <= 0) {
+        // Reset when particle goes too close or too far
+        if (this.z <= 200) {
           this.z = 2000;
           this.x = Math.random() * canvas.width;
           this.y = Math.random() * canvas.height;
         }
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        if (this.z >= 2000) {
+          this.z = 200;
+        }
+        
+        // Wrap around screen edges
+        if (this.x < -50) this.x = canvas.width + 50;
+        if (this.x > canvas.width + 50) this.x = -50;
+        if (this.y < -50) this.y = canvas.height + 50;
+        if (this.y > canvas.height + 50) this.y = -50;
       }
 
       draw() {
-        // Safety check: prevent division issues when z is too close to 1000
-        if (this.z >= 990 || this.z <= 0) return;
+        // Improved depth management - prevent particles from getting too close
+        if (this.z <= 200 || this.z >= 2000) return;
         
-        const scale = 1000 / (1000 - this.z);
+        const perspective = 1200; // Increased perspective for smoother scaling
+        const scale = Math.min(perspective / (perspective - this.z), 3); // Cap max scale at 3x
         const x2d = (this.x - canvas.width / 2) * scale + canvas.width / 2;
         const y2d = (this.y - canvas.height / 2) * scale + canvas.height / 2;
-        const size2d = Math.max(this.size * scale, 1);
+        
+        // Add subtle pulse effect
+        const pulse = 1 + Math.sin(this.pulsePhase) * 0.1;
+        const size2d = Math.max(this.baseSize * scale * pulse, 0.5);
 
-        // Only draw if particle is visible and has valid size
+        // Only draw if particle is visible and within reasonable bounds
         if (size2d <= 0 || isNaN(size2d) || isNaN(x2d) || isNaN(y2d)) return;
-        if (x2d < -50 || x2d > canvas.width + 50 || y2d < -50 || y2d > canvas.height + 50) return;
+        if (x2d < -100 || x2d > canvas.width + 100 || y2d < -100 || y2d > canvas.height + 100) return;
 
-        // Draw with glow effect - ensure gradient radius is always positive
-        const gradientRadius = Math.max(size2d * 2, 5);
+        // Enhanced glow effect
+        const gradientRadius = Math.max(size2d * 3, 8);
         const gradient = ctx.createRadialGradient(x2d, y2d, 0, x2d, y2d, gradientRadius);
         gradient.addColorStop(0, this.color);
-        // Create transparent version - extract RGB and set alpha to 0
         const colorMatch = this.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
         if (colorMatch) {
           const transparentColor = `rgba(${colorMatch[1]}, ${colorMatch[2]}, ${colorMatch[3]}, 0)`;
+          gradient.addColorStop(0.5, this.color);
           gradient.addColorStop(1, transparentColor);
         } else {
           gradient.addColorStop(1, this.color.replace(/[\d.]+\)$/, '0)'));
@@ -109,11 +138,11 @@ const Background3D = () => {
       }
 
       get2DPosition() {
-        // Safety check: prevent division issues
-        if (this.z >= 990 || this.z <= 0) {
+        if (this.z <= 200 || this.z >= 2000) {
           return { x: -1000, y: -1000, z: this.z };
         }
-        const scale = 1000 / (1000 - this.z);
+        const perspective = 1200;
+        const scale = Math.min(perspective / (perspective - this.z), 3);
         return {
           x: (this.x - canvas.width / 2) * scale + canvas.width / 2,
           y: (this.y - canvas.height / 2) * scale + canvas.height / 2,
@@ -122,26 +151,38 @@ const Background3D = () => {
       }
     }
 
-    // 3D Geometric Shape class
+    // Enhanced 3D Geometric Shape class with better depth control
     class Shape3D {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.z = Math.random() * 1500;
-        this.size = Math.random() * 30 + 20;
+        this.z = Math.random() * 1600 + 300; // Keep shapes between 300-1900
+        this.baseSize = Math.random() * 25 + 15;
         this.rotationX = Math.random() * Math.PI * 2;
         this.rotationY = Math.random() * Math.PI * 2;
         this.rotationZ = Math.random() * Math.PI * 2;
-        this.rotationSpeedX = (Math.random() - 0.5) * 0.02;
-        this.rotationSpeedY = (Math.random() - 0.5) * 0.02;
-        this.rotationSpeedZ = (Math.random() - 0.5) * 0.02;
-        this.speedZ = Math.random() * 1 + 0.3;
-        this.type = Math.random() > 0.5 ? 'cube' : 'sphere';
-        // Higher opacity in light mode for better visibility
-        const shapeOpacity = isDark ? '0.15' : '0.25';
-        this.color = Math.random() > 0.5 
-          ? primaryColor + shapeOpacity + ')'
-          : secondaryColor + shapeOpacity + ')';
+        this.rotationSpeedX = (Math.random() - 0.5) * 0.015;
+        this.rotationSpeedY = (Math.random() - 0.5) * 0.015;
+        this.rotationSpeedZ = (Math.random() - 0.5) * 0.015;
+        this.speedZ = Math.random() * 0.8 + 0.2;
+        // More shape variety
+        const typeRand = Math.random();
+        if (typeRand < 0.4) {
+          this.type = 'cube';
+        } else if (typeRand < 0.7) {
+          this.type = 'sphere';
+        } else {
+          this.type = 'ring';
+        }
+        const shapeOpacity = isDark ? '0.12' : '0.2';
+        const colorRand = Math.random();
+        if (colorRand < 0.4) {
+          this.color = primaryColor + shapeOpacity + ')';
+        } else if (colorRand < 0.8) {
+          this.color = secondaryColor + shapeOpacity + ')';
+        } else {
+          this.color = tertiaryColor + shapeOpacity + ')';
+        }
       }
 
       update() {
@@ -150,25 +191,30 @@ const Background3D = () => {
         this.rotationZ += this.rotationSpeedZ;
         this.z -= this.speedZ;
 
-        if (this.z <= 0) {
-          this.z = 1500;
+        // Reset when shape goes out of bounds
+        if (this.z <= 300) {
+          this.z = 1900;
           this.x = Math.random() * canvas.width;
           this.y = Math.random() * canvas.height;
+        }
+        if (this.z >= 1900) {
+          this.z = 300;
         }
       }
 
       draw() {
-        // Safety check: prevent division issues when z is too close to 1000
-        if (this.z >= 990 || this.z <= 0) return;
+        // Improved depth management
+        if (this.z <= 300 || this.z >= 1900) return;
         
-        const scale = 1000 / (1000 - this.z);
+        const perspective = 1200;
+        const scale = Math.min(perspective / (perspective - this.z), 2.5); // Cap at 2.5x
         const x2d = (this.x - canvas.width / 2) * scale + canvas.width / 2;
         const y2d = (this.y - canvas.height / 2) * scale + canvas.height / 2;
-        const size2d = Math.max(this.size * scale, 5);
+        const size2d = Math.max(this.baseSize * scale, 3);
 
-        // Only draw if shape is visible and has positive size
+        // Only draw if shape is visible and within bounds
         if (size2d <= 0 || isNaN(size2d) || isNaN(x2d) || isNaN(y2d)) return;
-        if (x2d < -100 || x2d > canvas.width + 100 || y2d < -100 || y2d > canvas.height + 100) return;
+        if (x2d < -150 || x2d > canvas.width + 150 || y2d < -150 || y2d > canvas.height + 150) return;
 
         ctx.save();
         ctx.translate(x2d, y2d);
@@ -176,8 +222,10 @@ const Background3D = () => {
 
         if (this.type === 'cube') {
           this.drawCube(size2d);
-        } else {
+        } else if (this.type === 'sphere') {
           this.drawSphere(size2d);
+        } else {
+          this.drawRing(size2d);
         }
 
         ctx.restore();
@@ -239,19 +287,16 @@ const Background3D = () => {
       }
 
       drawSphere(size) {
-        // Ensure size is positive and above minimum
         const safeSize = Math.max(size, 5);
         const radius = safeSize / 2;
-        
-        // Ensure gradient radius is positive
         const gradientRadius = Math.max(safeSize, 10);
         
         const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, gradientRadius);
         gradient.addColorStop(0, this.color);
-        // Create transparent version - extract RGB and set alpha to 0
         const colorMatch = this.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
         if (colorMatch) {
           const transparentColor = `rgba(${colorMatch[1]}, ${colorMatch[2]}, ${colorMatch[3]}, 0)`;
+          gradient.addColorStop(0.6, this.color);
           gradient.addColorStop(1, transparentColor);
         } else {
           gradient.addColorStop(1, this.color.replace(/[\d.]+\)$/, '0)'));
@@ -262,39 +307,66 @@ const Background3D = () => {
         ctx.fillStyle = gradient;
         ctx.fill();
         ctx.strokeStyle = this.color;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      drawRing(size) {
+        const radius = size / 2;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner ring for depth
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Cross lines for 3D effect
+        ctx.beginPath();
+        ctx.moveTo(-radius, 0);
+        ctx.lineTo(radius, 0);
+        ctx.moveTo(0, -radius);
+        ctx.lineTo(0, radius);
         ctx.stroke();
       }
     }
 
-    // Initialize particles and shapes
-    for (let i = 0; i < 80; i++) {
+    // Initialize particles and shapes with optimized counts
+    for (let i = 0; i < 70; i++) {
       particles.push(new Particle());
     }
 
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 12; i++) {
       shapes.push(new Shape3D());
     }
 
     const animate = () => {
+      // Clear canvas for fresh frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Draw connections between nearby particles
+      // Draw connections between nearby particles (mesh network effect)
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const p1 = particles[i].get2DPosition();
           const p2 = particles[j].get2DPosition();
+          
+          // Skip if positions are invalid
+          if (isNaN(p1.x) || isNaN(p1.y) || isNaN(p2.x) || isNaN(p2.y)) continue;
+          
           const distance = Math.sqrt(
             Math.pow(p1.x - p2.x, 2) + 
             Math.pow(p1.y - p2.y, 2)
           );
 
-          if (distance < 150 && p1.z > 500 && p2.z > 500) {
-            // Higher opacity for connections in light mode
-            const baseOpacity = isDark ? 0.2 : 0.3;
-            const opacity = (1 - distance / 150) * baseOpacity;
+          // Only connect particles that are in mid-to-far depth and close together
+          if (distance < 120 && p1.z > 400 && p2.z > 400 && p1.z < 1800 && p2.z < 1800) {
+            const baseOpacity = isDark ? 0.15 : 0.25;
+            const opacity = (1 - distance / 120) * baseOpacity * (1 - Math.abs(p1.z - p2.z) / 1400);
             ctx.strokeStyle = primaryColor + opacity + ')';
-            ctx.lineWidth = isDark ? 1 : 1.5;
+            ctx.lineWidth = isDark ? 0.8 : 1.2;
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -303,13 +375,13 @@ const Background3D = () => {
         }
       }
 
-      // Draw shapes
+      // Draw shapes first (they're further back)
       shapes.forEach(shape => {
         shape.update();
         shape.draw();
       });
 
-      // Draw particles
+      // Draw particles on top
       particles.forEach(particle => {
         particle.update();
         particle.draw();
@@ -323,6 +395,7 @@ const Background3D = () => {
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
   }, [isDark]);
@@ -339,7 +412,9 @@ const Background3D = () => {
         height: '100%',
         zIndex: -1,
         pointerEvents: 'none',
+        touchAction: 'none',
         opacity: isDark ? 0.4 : 0.35,
+        willChange: 'contents',
       }}
     />
   );

@@ -1,9 +1,13 @@
 import { motion } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaDownload } from 'react-icons/fa';
+import { useTheme } from '../context/ThemeContext';
 import resumePdf from '../assets/Marshal-Johnsan_Resume (1).pdf';
-import profileImage from '../assets/profile.jpeg';
+import profileImageLight from '../assets/Light.png';
+import profileImageDark from '../assets/Dark.png';
 
 const Hero = () => {
+  const { isDark } = useTheme();
+  const profileImage = isDark ? profileImageDark : profileImageLight;
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -110,13 +114,14 @@ const Hero = () => {
         }}
       >
         <motion.img
+          key={isDark ? 'dark' : 'light'}
           src={profileImage}
           alt="Profile"
           className="profile-photo"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
-            delay: 0.3,
+            delay: 0.1,
             type: "spring",
             stiffness: 200,
             damping: 15
