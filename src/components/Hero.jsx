@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaDownload } from 'react-icons/fa';
 import { useTheme } from '../context/ThemeContext';
 import resumePdf from '../assets/Marshal-Johnsan_Resume (1).pdf';
@@ -8,6 +8,28 @@ import profileImageDark from '../assets/Dark.png';
 const Hero = () => {
   const { isDark } = useTheme();
   const profileImage = isDark ? profileImageDark : profileImageLight;
+  
+  // Animation variants for theme transition
+  const imageVariants = {
+    initial: { 
+      opacity: 0, 
+      scale: 0.8, 
+      rotateY: -90,
+      filter: 'blur(10px)'
+    },
+    animate: { 
+      opacity: 1, 
+      scale: 1, 
+      rotateY: 0,
+      filter: 'blur(0px)'
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.8, 
+      rotateY: 90,
+      filter: 'blur(10px)'
+    }
+  };
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -112,21 +134,28 @@ const Hero = () => {
           scale: 1.05,
           transition: { duration: 0.3 }
         }}
+        style={{ perspective: '1000px' }}
       >
-        <motion.img
-          key={isDark ? 'dark' : 'light'}
-          src={profileImage}
-          alt="Profile"
-          className="profile-photo"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{
-            delay: 0.1,
-            type: "spring",
-            stiffness: 200,
-            damping: 15
-          }}
-        />
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={isDark ? 'dark' : 'light'}
+            src={profileImage}
+            alt="Profile"
+            className="profile-photo"
+            variants={imageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{
+              duration: 0.5,
+              ease: [0.4, 0, 0.2, 1],
+              opacity: { duration: 0.3 },
+              scale: { duration: 0.4 },
+              rotateY: { duration: 0.5 },
+              filter: { duration: 0.3 }
+            }}
+          />
+        </AnimatePresence>
       </motion.div>
     </motion.div>
 
