@@ -91,38 +91,39 @@ const Hero = () => {
             duration: 1.2
           }}
         >
-          <motion.div
-            className="profile-image"
-            whileHover={{ 
-              scale: 1.05,
-              rotateY: 10,
-              rotateX: 5,
-              z: 30
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
             <motion.div
-              className="image-placeholder"
-              whileHover={{ 
-                scale: 1.05,
-                transition: { duration: 0.3 }
-              }}
-            >
-              <motion.span
-                className="initials"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  delay: 1,
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 15
-                }}
-              >
-                MJ
-              </motion.span>
-            </motion.div>
-          </motion.div>
+      className="profile-image"
+      whileHover={{ 
+        scale: 1.05,
+        rotateY: 10,
+        rotateX: 5,
+        z: 30
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+    >
+      <motion.div
+        className="image-placeholder"
+        whileHover={{ 
+          scale: 1.05,
+          transition: { duration: 0.3 }
+        }}
+      >
+        <motion.img
+          src="/src/assets/profile.jpeg"   
+          alt="Profile"
+          className="profile-photo"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            delay: 0.3,
+            type: "spring",
+            stiffness: 200,
+            damping: 15
+          }}
+        />
+      </motion.div>
+    </motion.div>
+
         </motion.div>
       </motion.div>
 

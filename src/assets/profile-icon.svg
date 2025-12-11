@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">MJ favicon</title>
+
+  <!-- background circle -->
+  <rect width="64" height="64" rx="12" ry="12" fill="#0A84FF"/>
+
+  <!-- initials -->
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
+        font-family="Inter, Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700" font-size="30" fill="#ffffff" letter-spacing="-1">
+    MJ
+  </text>
+</svg>

@@ -11,6 +11,7 @@ import {
   FaAws,
   FaDatabase,
   FaPhp,
+  FaJava,
 } from 'react-icons/fa';
 import { SiTypescript, SiMongodb, SiPostgresql, SiPhp } from 'react-icons/si';
 import { RiNextjsFill } from "react-icons/ri";
@@ -36,6 +37,7 @@ const Skills = () => {
         
         { name: 'PHP', icon: <SiPhp />, level: 85 },
         {name:'NextJS', icon: <RiNextjsFill/>, level: 75},
+         {name:'Java', icon: <FaJava/>, level: 65},
       ],
     },
     {
