@@ -2635,6 +2635,137 @@ section#skills {
   font-weight: 500;
 }
 
+/* Database Actions */
+.db-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.db-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.db-action-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.db-action-btn:active {
+  transform: translateY(0);
+}
+
+.db-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.db-action-btn svg {
+  font-size: 1rem;
+}
+
+.export-btn {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.export-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.import-btn {
+  border-color: var(--accent-secondary);
+  color: var(--accent-secondary);
+}
+
+.import-btn:hover {
+  background: var(--accent-secondary);
+  color: white;
+}
+
+.like-button.processing {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Server Error Banner */
+.server-error-banner {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.server-error-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.server-error-banner .error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.server-error-banner .error-text {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.server-error-banner .error-text code {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  margin: 0 0.25rem;
+  word-break: break-all;
+}
+
 .visit-counter-note {
   text-align: center;
   padding-top: 1rem;
@@ -2699,6 +2830,35 @@ section#skills {
   .like-section {
     padding: 1.25rem 0 0;
     gap: 1rem;
+  }
+
+  .db-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .db-action-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.85rem;
+  }
+
+  .server-error-banner {
+    padding: 0.875rem 1.25rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .server-error-banner .error-text {
+    font-size: 0.85rem;
+  }
+
+  .server-error-banner .error-text code {
+    display: block;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.8rem;
   }
 }
 

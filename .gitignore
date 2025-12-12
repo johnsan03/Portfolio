@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables (NEVER commit these - they contain your GitHub token!)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Note: database.json is NOT in .gitignore - it should be committed to track visitor data

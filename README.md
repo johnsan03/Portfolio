@@ -48,6 +48,106 @@ The portfolio includes three engaging games that showcase creativity:
    - Score and missed count tracking
    - Increasing difficulty
 
+## 🗄️ Database & GitHub Pages Setup
+
+The portfolio uses a **GitHub-based file storage system** that stores all visitor data, visits, and likes in a `database.json` file in your GitHub repository. This works perfectly with GitHub Pages and ensures all users see the same counts and statistics.
+
+### How It Works
+
+- Data is stored in a `database.json` file in your GitHub repository
+- The frontend uses GitHub API to read and write this file
+- Falls back to localStorage if GitHub API is unavailable
+- No backend server required - perfect for GitHub Pages!
+
+### Setup Instructions
+
+1. **Create a GitHub Personal Access Token**:
+   - Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+   - Click "Generate new token (classic)"
+   - Give it a name like "Portfolio Database"
+   - Select scope: `repo` (full control of private repositories)
+   - Click "Generate token"
+   - **Copy the token immediately** (you won't see it again!)
+
+2. **Configure Environment Variables**:
+   
+   Create a `.env` file in the project root:
+   ```env
+   VITE_GITHUB_REPO=your-username/your-repo-name
+   VITE_GITHUB_TOKEN=your_personal_access_token_here
+   ```
+   
+   Replace:
+   - `your-username` with your GitHub username
+   - `your-repo-name` with your repository name (e.g., `Portfolio`)
+   - `your_personal_access_token_here` with the token you just created
+
+3. **Create the Database File** (Optional - will be created automatically):
+   
+   You can create an initial `database.json` file in your repository root:
+   ```json
+   {
+     "visits": {
+       "totalVisits": 0,
+       "uniqueVisits": 0,
+       "lastVisit": null,
+       "firstVisit": null,
+       "visitors": {}
+     },
+     "likes": {
+       "totalLikes": 0,
+       "likedVisitors": {},
+       "likeHistory": []
+     },
+     "metadata": {
+       "createdAt": "2024-01-01T00:00:00.000Z",
+       "lastUpdated": "2024-01-01T00:00:00.000Z"
+     }
+   }
+   ```
+
+4. **Add to .gitignore** (Important):
+   
+   Make sure `.env` is in your `.gitignore` to keep your token secret:
+   ```
+   .env
+   .env.local
+   .env.production
+   ```
+
+### GitHub Pages Deployment
+
+1. **Build your project**:
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy to GitHub Pages**:
+   - Go to your repository Settings → Pages
+   - Select source: Deploy from a branch
+   - Branch: `gh-pages` (or `main` if using `/` as root)
+   - Folder: `/dist`
+   - Click Save
+
+3. **Set GitHub Secrets for GitHub Actions** (Alternative):
+   
+   If using GitHub Actions for deployment, add secrets:
+   - `VITE_GITHUB_REPO`: Your repo (e.g., `username/repo`)
+   - `VITE_GITHUB_TOKEN`: Your personal access token
+
+### Fallback Behavior
+
+- If GitHub API is unavailable, the app falls back to localStorage
+- Data will be stored locally but won't be shared across users
+- Once GitHub API is available again, data syncs automatically
+
+### Security Notes
+
+- ⚠️ **Never commit your `.env` file** - it contains your GitHub token
+- The token only needs `repo` scope for private repos, or `public_repo` for public repos
+- Consider using a separate GitHub account or repository for the database file
+- The token is exposed in the frontend bundle, so use a token with minimal permissions
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -68,12 +168,17 @@ cd Portfolio
 npm install
 ```
 
-3. Start the development server:
-```bash
-npm run dev
-```
+3. **Configure GitHub API** (see Database Setup section above):
+   - Create a `.env` file with your GitHub token and repo name
 
-4. Open your browser and navigate to `http://localhost:5173`
+4. **Start the Frontend**:
+   ```bash
+   npm run dev
+   ```
+
+5. Open your browser and navigate to `http://localhost:5173`
+
+**Note**: The visit counter and likes will work with GitHub API. If not configured, it will use localStorage as a fallback.
 
 ### Build for Production
 

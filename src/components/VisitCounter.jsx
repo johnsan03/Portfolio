@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaEye, FaUsers, FaCalendarAlt, FaClock, FaHeart } from 'react-icons/fa';
+import { FaEye, FaUsers, FaCalendarAlt, FaClock, FaHeart, FaDownload, FaUpload } from 'react-icons/fa';
+import {
+  recordVisit,
+  getVisitStats,
+  hasLiked,
+  getLikeCount,
+  addLike,
+  exportDatabase,
+  isGitHubConfigured,
+} from '../utils/githubDB';
 
 const VisitCounter = () => {
   const [visitData, setVisitData] = useState({
@@ -15,132 +24,147 @@ const VisitCounter = () => {
     totalLikes: 0,
     hasLiked: false,
   });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [configError, setConfigError] = useState(false);
 
   useEffect(() => {
-    // Generate or retrieve visitor ID
-    let visitorId = localStorage.getItem('portfolio_visitor_id');
-    if (!visitorId) {
-      visitorId = `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('portfolio_visitor_id', visitorId);
-    }
-
-    // Get existing visit data
-    const storedData = localStorage.getItem('portfolio_visit_data');
-    let visitData = storedData ? JSON.parse(storedData) : {
-      totalVisits: 0,
-      uniqueVisits: 0,
-      lastVisit: null,
-      firstVisit: null,
-      visitors: {},
-    };
-
-    // Check if this is a new session
-    const sessionKey = `portfolio_session_${visitorId}`;
-    const hasSession = sessionStorage.getItem(sessionKey);
-    const now = new Date().toISOString();
-
-    let isNewVisit = false;
-    if (!hasSession) {
-      // New visit in this session
-      isNewVisit = true;
-      visitData.totalVisits += 1;
-      sessionStorage.setItem(sessionKey, 'true');
-
-      // Check if this is a unique visitor
-      if (!visitData.visitors[visitorId]) {
-        visitData.uniqueVisits += 1;
-        visitData.visitors[visitorId] = {
-          firstVisit: now,
-          lastVisit: now,
-          visitCount: 1,
-        };
-        if (!visitData.firstVisit) {
-          visitData.firstVisit = now;
+    // Record visit and get stats (async)
+    const loadData = async () => {
+      try {
+        // Check GitHub configuration
+        if (!isGitHubConfigured()) {
+          setConfigError(true);
+          console.warn('GitHub configuration not set. Using localStorage only. See README for setup instructions.');
         }
-      } else {
-        visitData.visitors[visitorId].lastVisit = now;
-        visitData.visitors[visitorId].visitCount += 1;
+
+        // Record visit
+        const visitInfo = await recordVisit();
+        
+        // Get stats
+        const stats = await getVisitStats();
+
+        setVisitData({
+          ...stats,
+          isNewVisit: visitInfo.isNewVisit,
+        });
+
+        // Load like data
+        const [likeCount, liked] = await Promise.all([
+          getLikeCount(),
+          hasLiked(),
+        ]);
+
+        setLikeData({
+          totalLikes: likeCount,
+          hasLiked: liked,
+        });
+        setConfigError(false);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setConfigError(true);
+        // Set default values on error
+        setVisitData({
+          totalVisits: 0,
+          uniqueVisits: 0,
+          lastVisit: null,
+          firstVisit: null,
+          visitorId: null,
+          formattedLastVisit: 'N/A',
+          formattedFirstVisit: 'N/A',
+          formattedLastVisitTime: 'N/A',
+          isNewVisit: false,
+        });
+        setLikeData({
+          totalLikes: 0,
+          hasLiked: false,
+        });
       }
-
-      visitData.lastVisit = now;
-
-      // Save updated data
-      localStorage.setItem('portfolio_visit_data', JSON.stringify(visitData));
-    }
-
-    // Format dates for display
-    const formatDate = (dateString) => {
-      if (!dateString) return 'N/A';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
     };
 
-    const formatTime = (dateString) => {
-      if (!dateString) return 'N/A';
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    };
-
-    setVisitData({
-      totalVisits: visitData.totalVisits,
-      uniqueVisits: visitData.uniqueVisits,
-      lastVisit: visitData.lastVisit,
-      firstVisit: visitData.firstVisit,
-      visitorId: visitorId,
-      formattedLastVisit: formatDate(visitData.lastVisit),
-      formattedFirstVisit: formatDate(visitData.firstVisit),
-      formattedLastVisitTime: formatTime(visitData.lastVisit),
-      isNewVisit: isNewVisit,
-    });
-
-    // Load like data
-    const likeStorage = localStorage.getItem('portfolio_likes');
-    const likesData = likeStorage ? JSON.parse(likeStorage) : {
-      totalLikes: 0,
-      likedVisitors: {},
-    };
-
-    const hasLiked = likesData.likedVisitors[visitorId] || false;
-
-    setLikeData({
-      totalLikes: likesData.totalLikes || 0,
-      hasLiked: hasLiked,
-    });
+    loadData();
   }, []);
 
-  const handleLike = () => {
-    if (likeData.hasLiked) return;
+  const handleLike = async () => {
+    if (likeData.hasLiked || isProcessing) return;
 
-    const visitorId = visitData.visitorId || localStorage.getItem('portfolio_visitor_id');
-    if (!visitorId) return;
+    setIsProcessing(true);
+    try {
+      const result = await addLike();
 
-    const likeStorage = localStorage.getItem('portfolio_likes');
-    const likesData = likeStorage ? JSON.parse(likeStorage) : {
-      totalLikes: 0,
-      likedVisitors: {},
-    };
+      if (result.success) {
+        setLikeData({
+          totalLikes: result.totalLikes,
+          hasLiked: true,
+        });
+        setConfigError(false);
+      } else {
+        alert(result.message || 'Failed to add like');
+      }
+    } catch (error) {
+      console.error('Error adding like:', error);
+      setConfigError(true);
+      alert('Error adding like. Please check your GitHub configuration.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
-    // Check if already liked
-    if (likesData.likedVisitors[visitorId]) return;
+  const handleExport = () => {
+    try {
+      exportDatabase();
+    } catch (error) {
+      console.error('Error exporting database:', error);
+      alert('Error exporting database. Please try again.');
+    }
+  };
 
-    // Add like
-    likesData.totalLikes += 1;
-    likesData.likedVisitors[visitorId] = true;
-    likesData.likedVisitors[visitorId + '_timestamp'] = new Date().toISOString();
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    localStorage.setItem('portfolio_likes', JSON.stringify(likesData));
-
-    setLikeData({
-      totalLikes: likesData.totalLikes,
-      hasLiked: true,
-    });
+    setIsProcessing(true);
+    try {
+      // Read file and send to server
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          
+          // Send to server to merge (you might want to add an import endpoint)
+          // For now, we'll just show a message
+          alert('Import functionality: Please use the server API directly or contact admin.');
+          
+          // Reload data after import
+          const stats = await getVisitStats();
+          setVisitData({
+            ...stats,
+            isNewVisit: false,
+          });
+          
+          const [likeCount, liked] = await Promise.all([
+            getLikeCount(),
+            hasLiked(),
+          ]);
+          
+          setLikeData({
+            totalLikes: likeCount,
+            hasLiked: liked,
+          });
+        } catch (error) {
+          console.error('Error parsing file:', error);
+          alert('Error importing database. Please check the file format.');
+        } finally {
+          setIsProcessing(false);
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('Error importing database:', error);
+      alert('Error importing database. Please check the file format.');
+      setIsProcessing(false);
+      event.target.value = '';
+    }
   };
 
   return (
@@ -150,6 +174,19 @@ const VisitCounter = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
+      {configError && !isGitHubConfigured() && (
+        <motion.div
+          className="server-error-banner"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <span className="error-icon">⚠️</span>
+          <span className="error-text">
+            GitHub configuration not set. Using localStorage only. See README for setup instructions.
+          </span>
+        </motion.div>
+      )}
       <div className="visit-counter-header">
         <motion.div
           className="header-icon-wrapper"
@@ -289,11 +326,11 @@ const VisitCounter = () => {
       </div>
       <div className="like-section">
         <motion.button
-          className={`like-button ${likeData.hasLiked ? 'liked' : ''}`}
+          className={`like-button ${likeData.hasLiked ? 'liked' : ''} ${isProcessing ? 'processing' : ''}`}
           onClick={handleLike}
-          disabled={likeData.hasLiked}
-          whileHover={!likeData.hasLiked ? { scale: 1.05 } : {}}
-          whileTap={!likeData.hasLiked ? { scale: 0.95 } : {}}
+          disabled={likeData.hasLiked || isProcessing}
+          whileHover={!likeData.hasLiked && !isProcessing ? { scale: 1.05 } : {}}
+          whileTap={!likeData.hasLiked && !isProcessing ? { scale: 0.95 } : {}}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -306,7 +343,7 @@ const VisitCounter = () => {
           ) : (
             <>
               <FaHeart className="like-icon" />
-              <span>Like</span>
+              <span>{isProcessing ? 'Processing...' : 'Like'}</span>
             </>
           )}
         </motion.button>
@@ -321,7 +358,29 @@ const VisitCounter = () => {
           <span className="count-label">Likes</span>
         </motion.div>
       </div>
-     
+      <div className="db-actions">
+        <motion.button
+          className="db-action-btn export-btn"
+          onClick={handleExport}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title="Export database as JSON"
+        >
+          <FaDownload />
+          <span>Export Data</span>
+        </motion.button>
+        <label className="db-action-btn import-btn">
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            disabled={isProcessing}
+            style={{ display: 'none' }}
+          />
+          <FaUpload />
+          <span>Import Data</span>
+        </label>
+      </div>
     </motion.div>
   );
 };

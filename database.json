@@ -1,0 +1,18 @@
+{
+  "visits": {
+    "totalVisits": 0,
+    "uniqueVisits": 0,
+    "lastVisit": null,
+    "firstVisit": null,
+    "visitors": {}
+  },
+  "likes": {
+    "totalLikes": 0,
+    "likedVisitors": {},
+    "likeHistory": []
+  },
+  "metadata": {
+    "createdAt": "2025-12-12T17:59:36.108Z",
+    "lastUpdated": "2025-12-12T17:59:36.108Z"
+  }
+}
