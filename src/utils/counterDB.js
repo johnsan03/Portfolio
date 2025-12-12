@@ -4,7 +4,7 @@
  * Uses localStorage for likes (no server writes needed)
  */
 
-const COUNTER_DEV_ID = import.meta.env.VITE_COUNTER_DEV_ID || '394589a7-bfbe-4a3f-8cd1-d6621c6f18db';
+const COUNTER_DEV_USERNAME = import.meta.env.VITE_COUNTER_DEV_USERNAME || 'johnsan03';
 const COUNTER_DEV_API = 'https://api.counter.dev/api/v1';
 
 const VISITOR_ID_KEY = 'portfolio_visitor_id';
@@ -47,12 +47,12 @@ const getDefaultDatabase = () => {
 };
 
 /**
- * Get stats from counter.dev using data-id
- * Note: Counter.dev tracks visits automatically via the script tag
- * The script tag handles tracking, we just display the stats
+ * Get stats from counter.dev using username
+ * Counter.dev tracks visits automatically via the script tag
+ * We'll try to fetch stats from their API
  */
 const getCounterDevStats = async () => {
-  if (!COUNTER_DEV_ID || COUNTER_DEV_ID === 'YOUR_ID') {
+  if (!COUNTER_DEV_USERNAME || COUNTER_DEV_USERNAME === 'YOUR_USERNAME') {
     // If not configured, return defaults (script still tracks)
     return {
       totalVisits: 0,
@@ -61,16 +61,43 @@ const getCounterDevStats = async () => {
   }
 
   try {
-    // Counter.dev API endpoint using data-id
-    // Note: Counter.dev may not have a public API for stats
-    // The script tag handles tracking, stats are available in their dashboard
-    // For now, we'll return defaults and let the script handle tracking
+    // Try to fetch stats from Counter.dev
+    // Counter.dev may expose stats via their API or dashboard
+    // Try multiple possible endpoints
     
-    // You can view stats at: https://counter.dev/dashboard
-    // The script automatically tracks visits in the background
-    
-    // If Counter.dev provides an API endpoint, we can fetch here
-    // For now, return defaults - tracking happens via script tag
+    // Option 1: Try Counter.dev stats API
+    const endpoints = [
+      `https://api.counter.dev/api/v1/stats/${COUNTER_DEV_USERNAME}`,
+      `https://counter.dev/api/v1/stats/${COUNTER_DEV_USERNAME}`,
+      `https://api.counter.dev/stats/${COUNTER_DEV_USERNAME}`,
+    ];
+
+    for (const apiUrl of endpoints) {
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Extract stats from response (structure may vary)
+          return {
+            totalVisits: data.total || data.visits || data.count || data.views || 0,
+            uniqueVisits: data.unique || data.uniqueVisitors || data.uniques || 0,
+          };
+        }
+      } catch (e) {
+        // Try next endpoint
+        continue;
+      }
+    }
+
+    // If all API calls fail, return defaults
+    // Counter.dev script still tracks in background
+    console.info('Counter.dev API not available, but tracking still works via script tag');
     return {
       totalVisits: 0, // Will be tracked by counter.dev script
       uniqueVisits: 0, // Will be tracked by counter.dev script
@@ -87,7 +114,7 @@ const getCounterDevStats = async () => {
 };
 
 /**
- * Record a new visit (just track locally, counter.dev handles server-side)
+ * Record a new visit (track locally for display, counter.dev handles server-side tracking)
  */
 export const recordVisit = async () => {
   const visitorId = getVisitorId();
@@ -100,14 +127,20 @@ export const recordVisit = async () => {
     // Mark session
     sessionStorage.setItem(sessionKey, 'true');
     
-    // Update local database for first/last visit tracking
+    // Update local database for display
     try {
       const local = localStorage.getItem(LOCAL_STORAGE_KEY);
       const db = local ? JSON.parse(local) : getDefaultDatabase();
       const now = new Date().toISOString();
       
       const isNewVisitor = !db.visits.visitors[visitorId];
+      
+      // Increment total visits
+      db.visits.totalVisits = (db.visits.totalVisits || 0) + 1;
+      
       if (isNewVisitor) {
+        // Increment unique visits
+        db.visits.uniqueVisits = (db.visits.uniqueVisits || 0) + 1;
         db.visits.visitors[visitorId] = {
           firstVisit: now,
           lastVisit: now,
@@ -122,17 +155,22 @@ export const recordVisit = async () => {
       }
 
       db.visits.lastVisit = now;
+      db.metadata.lastUpdated = now;
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
+      
+      return {
+        isNewVisit: true,
+        isNewVisitor: isNewVisitor,
+        visitorId,
+      };
     } catch (error) {
       console.error('Error updating local visit data:', error);
+      return {
+        isNewVisit: true,
+        isNewVisitor: false,
+        visitorId,
+      };
     }
-
-    return {
-      isNewVisit: true,
-      isNewVisitor: !localStorage.getItem(LOCAL_STORAGE_KEY) || 
-                    !JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}').visits?.visitors?.[visitorId],
-      visitorId,
-    };
   }
 
   return {
@@ -143,10 +181,12 @@ export const recordVisit = async () => {
 };
 
 /**
- * Get visit statistics (from counter.dev + local data)
+ * Get visit statistics (from local storage - Counter.dev tracks separately)
  */
 export const getVisitStats = async () => {
-  // Get local data for first/last visit info
+  // Get local data for display
+  // Counter.dev tracks server-side but doesn't provide public API
+  // So we use local tracking for frontend display
   const local = localStorage.getItem(LOCAL_STORAGE_KEY);
   const localDb = local ? JSON.parse(local) : getDefaultDatabase();
   const visitorId = getVisitorId();
@@ -170,37 +210,18 @@ export const getVisitStats = async () => {
     });
   };
 
-  try {
-    // Try to get unique visitors from counter.dev
-    // Note: Counter.dev script tracks automatically, but stats API may not be publicly available
-    // Stats can be viewed at: https://counter.dev/dashboard
-    const counterStats = await getCounterDevStats();
-    
-    return {
-      totalVisits: counterStats.totalVisits || 0,
-      uniqueVisits: counterStats.uniqueVisits || 0, // From counter.dev (if API available)
-      lastVisit: localDb.visits.lastVisit,
-      firstVisit: localDb.visits.firstVisit,
-      visitorId: visitorId,
-      formattedLastVisit: formatDate(localDb.visits.lastVisit),
-      formattedFirstVisit: formatDate(localDb.visits.firstVisit),
-      formattedLastVisitTime: formatTime(localDb.visits.lastVisit),
-    };
-  } catch (error) {
-    console.warn('Counter.dev stats API not available (tracking still works):', error);
-    // Return local data - Counter.dev script still tracks in background
-    // Visit https://counter.dev/dashboard to view your stats
-    return {
-      totalVisits: 0, // Counter.dev tracks this automatically via script
-      uniqueVisits: 0, // Counter.dev tracks this automatically via script
-      lastVisit: localDb.visits.lastVisit,
-      firstVisit: localDb.visits.firstVisit,
-      visitorId: visitorId,
-      formattedLastVisit: formatDate(localDb.visits.lastVisit),
-      formattedFirstVisit: formatDate(localDb.visits.firstVisit),
-      formattedLastVisitTime: formatTime(localDb.visits.lastVisit),
-    };
-  }
+  // Use local tracking for display
+  // Counter.dev tracks separately on their servers
+  return {
+    totalVisits: localDb.visits.totalVisits || 0,
+    uniqueVisits: localDb.visits.uniqueVisits || 0,
+    lastVisit: localDb.visits.lastVisit,
+    firstVisit: localDb.visits.firstVisit,
+    visitorId: visitorId,
+    formattedLastVisit: formatDate(localDb.visits.lastVisit),
+    formattedFirstVisit: formatDate(localDb.visits.firstVisit),
+    formattedLastVisitTime: formatTime(localDb.visits.lastVisit),
+  };
 };
 
 /**
@@ -324,6 +345,6 @@ export const exportDatabase = async () => {
  * Check if counter.dev is configured
  */
 export const isCounterDevConfigured = () => {
-  return !!COUNTER_DEV_ID && COUNTER_DEV_ID !== 'YOUR_ID' && COUNTER_DEV_ID !== '';
+  return !!COUNTER_DEV_USERNAME && COUNTER_DEV_USERNAME !== 'YOUR_USERNAME' && COUNTER_DEV_USERNAME !== '';
 };
 

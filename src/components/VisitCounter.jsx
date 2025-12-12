@@ -31,16 +31,10 @@ const VisitCounter = () => {
     // Record visit and get stats (async)
     const loadData = async () => {
       try {
-        // Check counter.dev configuration
-        if (!isCounterDevConfigured()) {
-          setConfigError(true);
-          console.warn('Counter.dev ID not set. Visit counts may not work. See README for setup instructions.');
-        }
-
-        // Record visit
+        // Record visit (updates local storage)
         const visitInfo = await recordVisit();
         
-        // Get stats
+        // Get stats from local storage
         const stats = await getVisitStats();
 
         setVisitData({
@@ -63,11 +57,6 @@ const VisitCounter = () => {
         console.error('Error loading data:', error);
         setConfigError(true);
         
-        // Show specific error message for configuration issues
-        if (error.message && error.message.includes('not configured')) {
-          console.error('🔴 Counter.dev Configuration Error:', error.message);
-        }
-        
         // Set default values on error
         setVisitData({
           totalVisits: 0,
@@ -88,6 +77,13 @@ const VisitCounter = () => {
     };
 
     loadData();
+    
+    // Refresh stats periodically to show updates
+    const interval = setInterval(() => {
+      loadData();
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleLike = async () => {
@@ -180,19 +176,6 @@ const VisitCounter = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {configError && !isCounterDevConfigured() && (
-        <motion.div
-          className="server-error-banner"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <span className="error-icon">⚠️</span>
-          <span className="error-text">
-            Counter.dev tracking script detected. Visit counts are being tracked automatically. View stats at counter.dev/dashboard
-          </span>
-        </motion.div>
-      )}
       <div className="visit-counter-header">
         <motion.div
           className="header-icon-wrapper"
