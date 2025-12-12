@@ -151,8 +151,19 @@ const VisitCounter = () => {
       transition={{ duration: 0.6 }}
     >
       <div className="visit-counter-header">
-        <FaEye className="visit-icon" />
-        <h3>Visit Statistics</h3>
+        <motion.div
+          className="header-icon-wrapper"
+          initial={{ rotate: -180, scale: 0 }}
+          animate={{ rotate: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}
+        >
+          <FaEye className="visit-icon" />
+          <div className="icon-glow"></div>
+        </motion.div>
+        <div className="header-text">
+          <h3>Visit Statistics</h3>
+          <p className="header-subtitle">Track your journey</p>
+        </div>
         {visitData.isNewVisit && (
           <motion.span
             className="new-visit-badge"
@@ -160,73 +171,119 @@ const VisitCounter = () => {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
           >
+            <motion.span
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              ✨
+            </motion.span>
             New Visit!
           </motion.span>
         )}
       </div>
       <div className="visit-stats-grid">
         <motion.div
-          className="visit-stat-card"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          whileHover={{ scale: 1.02 }}
+          className="visit-stat-card stat-card-1"
+          initial={{ opacity: 0, y: 30, rotateX: -15 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 100 }}
+          whileHover={{ y: -5 }}
         >
-          <div className="stat-icon">
-            <FaUsers />
+          <div className="stat-card-bg"></div>
+          <div className="stat-icon-wrapper">
+            <div className="stat-icon-glow"></div>
+            <FaUsers className="stat-icon" />
           </div>
           <div className="stat-content">
-            <div className="stat-value">{visitData.totalVisits.toLocaleString()}</div>
+            <motion.div
+              className="stat-value"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            >
+              {visitData.totalVisits.toLocaleString()}
+            </motion.div>
             <div className="stat-label">Total Visits</div>
+            <div className="stat-decoration"></div>
           </div>
         </motion.div>
 
         <motion.div
-          className="visit-stat-card"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-          whileHover={{ scale: 1.02 }}
+          className="visit-stat-card stat-card-2"
+          initial={{ opacity: 0, y: 30, rotateX: -15 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+          whileHover={{ y: -5 }}
         >
-          <div className="stat-icon">
-            <FaEye />
+          <div className="stat-card-bg"></div>
+          <div className="stat-icon-wrapper">
+            <div className="stat-icon-glow"></div>
+            <FaEye className="stat-icon" />
           </div>
           <div className="stat-content">
-            <div className="stat-value">{visitData.uniqueVisits.toLocaleString()}</div>
+            <motion.div
+              className="stat-value"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+            >
+              {visitData.uniqueVisits.toLocaleString()}
+            </motion.div>
             <div className="stat-label">Unique Visitors</div>
+            <div className="stat-decoration"></div>
           </div>
         </motion.div>
 
         <motion.div
-          className="visit-stat-card"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          whileHover={{ scale: 1.02 }}
+          className="visit-stat-card stat-card-3"
+          initial={{ opacity: 0, y: 30, rotateX: -15 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ delay: 0.3, type: "spring", stiffness: 100 }}
+          whileHover={{ y: -5 }}
         >
-          <div className="stat-icon">
-            <FaCalendarAlt />
+          <div className="stat-card-bg"></div>
+          <div className="stat-icon-wrapper">
+            <div className="stat-icon-glow"></div>
+            <FaCalendarAlt className="stat-icon" />
           </div>
           <div className="stat-content">
-            <div className="stat-value">{visitData.formattedLastVisit}</div>
+            <motion.div
+              className="stat-value"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+            >
+              {visitData.formattedLastVisit}
+            </motion.div>
             <div className="stat-label">Last Visit</div>
             <div className="stat-time">{visitData.formattedLastVisitTime}</div>
+            <div className="stat-decoration"></div>
           </div>
         </motion.div>
 
         <motion.div
-          className="visit-stat-card"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          whileHover={{ scale: 1.02 }}
+          className="visit-stat-card stat-card-4"
+          initial={{ opacity: 0, y: 30, rotateX: -15 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          transition={{ delay: 0.4, type: "spring", stiffness: 100 }}
+          whileHover={{ y: -5 }}
         >
-          <div className="stat-icon">
-            <FaClock />
+          <div className="stat-card-bg"></div>
+          <div className="stat-icon-wrapper">
+            <div className="stat-icon-glow"></div>
+            <FaClock className="stat-icon" />
           </div>
           <div className="stat-content">
-            <div className="stat-value">{visitData.formattedFirstVisit}</div>
+            <motion.div
+              className="stat-value"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+            >
+              {visitData.formattedFirstVisit}
+            </motion.div>
             <div className="stat-label">First Visit</div>
+            <div className="stat-decoration"></div>
           </div>
         </motion.div>
       </div>
@@ -264,9 +321,7 @@ const VisitCounter = () => {
           <span className="count-label">Likes</span>
         </motion.div>
       </div>
-      <div className="visit-counter-note">
-        <p>Statistics are stored locally in your browser</p>
-      </div>
+     
     </motion.div>
   );
 };

@@ -9,6 +9,7 @@ import Games from './components/Games';
 import Projects from './components/Projects';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import VisitCounter from './components/VisitCounter';
 import Background3D from './components/Background3D';
 import './App.css';
 
@@ -26,7 +27,9 @@ function App() {
           <Quotes />
           <Games />
           <Projects />
+           <VisitCounter />
           <Contact />
+         
         </main>
         <Footer />
       </div>

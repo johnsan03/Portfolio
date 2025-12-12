@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="container">
-        <VisitCounter />
+        
         <motion.div
           className="footer-content"
           initial={{ opacity: 0 }}
