@@ -40,6 +40,15 @@ const Projects = () => {
       demo: 'https://rearvu.com/',
       image: 'project4',
     },
+       {
+      title: 'Morts Driving School',
+      description:
+        'Morty’s Driving School is a Next.js and React-based web application built on Replit to streamline operations across multiple driving school branches. It supports Admins, Instructors, and Students with dedicated workflows for enrollment, class booking, progress tracking, scheduling, payments, and document management. The system also includes features like automated notifications, permit tracking, and bulk student imports, serving as a complete management hub for driving schools.',
+         technologies: ['Next.Js', 'React', 'PostgresSQL', 'Replit'],
+    //   github: 'https://github.com',
+      demo: 'https://morty.empowerdemos.com/',
+      image: 'project4',
+    },
     {
         title: 'SLUDI',
         description:

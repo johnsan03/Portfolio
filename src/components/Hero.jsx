@@ -121,10 +121,7 @@ const Hero = () => {
             <motion.div
       className="profile-image"
       whileHover={{ 
-        scale: 1.05,
-        rotateY: 10,
-        rotateX: 5,
-        z: 30
+        scale: 1.02
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >

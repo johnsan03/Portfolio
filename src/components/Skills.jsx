@@ -12,9 +12,13 @@ import {
   FaDatabase,
   FaPhp,
   FaJava,
+  
+  
 } from 'react-icons/fa';
-import { SiTypescript, SiMongodb, SiPostgresql, SiPhp } from 'react-icons/si';
+import { SiTypescript, SiMongodb, SiPostgresql, SiPhp ,SiReplit,SiMysql} from 'react-icons/si';
+import { FaFlutter } from "react-icons/fa6";
 import { RiNextjsFill } from "react-icons/ri";
+import { VscAzure } from "react-icons/vsc";
 
 const Skills = () => {
 
@@ -27,6 +31,7 @@ const Skills = () => {
         { name: 'TypeScript', icon: <SiTypescript />, level: 85 },
         { name: 'HTML5', icon: <FaHtml5 />, level: 95 },
         { name: 'CSS3', icon: <FaCss3Alt />, level: 90 },
+        { name: 'Flutter', icon: <FaFlutter />, level: 65 },
       ],
     },
     {
@@ -40,14 +45,22 @@ const Skills = () => {
          {name:'Java', icon: <FaJava/>, level: 65},
       ],
     },
+     {
+      title: 'Database & Devops',
+      skills: [
+        { name: 'SQL', icon: <SiMysql />, level: 85 },
+        { name: 'MongoDB', icon: <SiMongodb />, level: 80 },   
+        { name: 'PostgreSQL', icon: <SiPostgresql />, level: 85 },
+        { name: 'Azure', icon: <VscAzure />, level: 75 },
+        
+      ],
+    },
     {
       title: 'Tools & Others',
       skills: [
         { name: 'Git', icon: <FaGitAlt />, level: 90 },
-        { name: 'Docker', icon: <FaDocker />, level: 80 },
-       
-        { name: 'MongoDB', icon: <SiMongodb />, level: 80 },
-        { name: 'PostgreSQL', icon: <SiPostgresql />, level: 85 },
+        { name: 'Docker', icon: <FaDocker />, level: 80 },     
+         { name: 'Replit', icon: <SiReplit />, level: 80 },
         { name: 'AWS', icon: <FaAws />, level: 75 },
       ],
     },

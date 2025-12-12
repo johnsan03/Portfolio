@@ -18,8 +18,10 @@ const Background3D = () => {
     let scrollY = 0;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const width = Math.min(window.innerWidth, document.documentElement.clientWidth);
+      const height = document.documentElement.scrollHeight || document.body.scrollHeight || window.innerHeight;
+      canvas.width = width;
+      canvas.height = Math.max(height, window.innerHeight);
     };
 
     resizeCanvas();
@@ -114,9 +116,9 @@ const Background3D = () => {
         const pulse = 1 + Math.sin(this.pulsePhase) * 0.1;
         const size2d = Math.max(this.baseSize * scale * pulse, 0.5);
 
-        // Only draw if particle is visible and within reasonable bounds
+        // Only draw if particle is visible and within canvas bounds
         if (size2d <= 0 || isNaN(size2d) || isNaN(x2d) || isNaN(y2d)) return;
-        if (x2d < -100 || x2d > canvas.width + 100 || y2d < -100 || y2d > canvas.height + 100) return;
+        if (x2d < -50 || x2d > canvas.width + 50 || y2d < -50 || y2d > canvas.height + 50) return;
 
         // Enhanced glow effect
         const gradientRadius = Math.max(size2d * 3, 8);
@@ -212,9 +214,9 @@ const Background3D = () => {
         const y2d = (this.y - canvas.height / 2) * scale + canvas.height / 2;
         const size2d = Math.max(this.baseSize * scale, 3);
 
-        // Only draw if shape is visible and within bounds
+        // Only draw if shape is visible and within canvas bounds
         if (size2d <= 0 || isNaN(size2d) || isNaN(x2d) || isNaN(y2d)) return;
-        if (x2d < -150 || x2d > canvas.width + 150 || y2d < -150 || y2d > canvas.height + 150) return;
+        if (x2d < -100 || x2d > canvas.width + 100 || y2d < -100 || y2d > canvas.height + 100) return;
 
         ctx.save();
         ctx.translate(x2d, y2d);
