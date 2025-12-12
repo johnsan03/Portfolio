@@ -18,19 +18,24 @@
     }
   },
   "likes": {
-    "totalLikes": 1,
+    "totalLikes": 2,
     "likedVisitors": {
-      "visitor_1765557658411_434r1dbji": true
+      "visitor_1765557658411_434r1dbji": true,
+      "visitor_1765557691155_v4aofpcj7": true
     },
     "likeHistory": [
       {
         "visitorId": "visitor_1765557658411_434r1dbji",
         "timestamp": "2025-12-12T18:53:56.859Z"
+      },
+      {
+        "visitorId": "visitor_1765557691155_v4aofpcj7",
+        "timestamp": "2025-12-12T18:56:43.417Z"
       }
     ]
   },
   "metadata": {
     "createdAt": "2025-12-12T17:59:36.108Z",
-    "lastUpdated": "2025-12-12T18:56:35.834Z"
+    "lastUpdated": "2025-12-12T18:56:43.862Z"
   }
 }
