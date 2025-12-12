@@ -1,13 +1,18 @@
 {
   "visits": {
-    "totalVisits": 1,
-    "uniqueVisits": 1,
-    "lastVisit": "2025-12-12T18:53:46.911Z",
+    "totalVisits": 2,
+    "uniqueVisits": 2,
+    "lastVisit": "2025-12-12T18:56:35.475Z",
     "firstVisit": "2025-12-12T18:53:46.911Z",
     "visitors": {
       "visitor_1765557658411_434r1dbji": {
         "firstVisit": "2025-12-12T18:53:46.911Z",
         "lastVisit": "2025-12-12T18:53:46.911Z",
+        "visitCount": 1
+      },
+      "visitor_1765557691155_v4aofpcj7": {
+        "firstVisit": "2025-12-12T18:56:35.475Z",
+        "lastVisit": "2025-12-12T18:56:35.475Z",
         "visitCount": 1
       }
     }
@@ -26,6 +31,6 @@
   },
   "metadata": {
     "createdAt": "2025-12-12T17:59:36.108Z",
-    "lastUpdated": "2025-12-12T18:53:57.729Z"
+    "lastUpdated": "2025-12-12T18:56:35.834Z"
   }
 }
