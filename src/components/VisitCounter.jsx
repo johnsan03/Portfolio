@@ -8,8 +8,8 @@ import {
   getLikeCount,
   addLike,
   exportDatabase,
-  isGitHubConfigured,
-} from '../utils/githubDB';
+  isCounterDevConfigured,
+} from '../utils/counterDB';
 
 const VisitCounter = () => {
   const [visitData, setVisitData] = useState({
@@ -31,10 +31,10 @@ const VisitCounter = () => {
     // Record visit and get stats (async)
     const loadData = async () => {
       try {
-        // Check GitHub configuration
-        if (!isGitHubConfigured()) {
+        // Check counter.dev configuration
+        if (!isCounterDevConfigured()) {
           setConfigError(true);
-          console.warn('GitHub configuration not set. Using localStorage only. See README for setup instructions.');
+          console.warn('Counter.dev ID not set. Visit counts may not work. See README for setup instructions.');
         }
 
         // Record visit
@@ -63,10 +63,9 @@ const VisitCounter = () => {
         console.error('Error loading data:', error);
         setConfigError(true);
         
-        // Show specific error message for authentication issues
-        if (error.message && error.message.includes('authentication failed')) {
-          console.error('🔴 GitHub Authentication Error:', error.message);
-          alert('GitHub authentication failed. Please check:\n1. Your VITE_GITHUB_TOKEN in .env file\n2. Token has "repo" scope (or "public_repo" for public repos)\n3. Token is not expired\n\nSee console for details.');
+        // Show specific error message for configuration issues
+        if (error.message && error.message.includes('not configured')) {
+          console.error('🔴 Counter.dev Configuration Error:', error.message);
         }
         
         // Set default values on error
@@ -181,7 +180,7 @@ const VisitCounter = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {configError && (
+      {configError && !isCounterDevConfigured() && (
         <motion.div
           className="server-error-banner"
           initial={{ opacity: 0, y: -20 }}
@@ -190,9 +189,7 @@ const VisitCounter = () => {
         >
           <span className="error-icon">⚠️</span>
           <span className="error-text">
-            {!isGitHubConfigured() 
-              ? 'GitHub configuration not set. Using localStorage only. See README for setup instructions.'
-              : 'GitHub API error. Check your token and repository name in .env file. Using localStorage fallback.'}
+            Counter.dev tracking script detected. Visit counts are being tracked automatically. View stats at counter.dev/dashboard
           </span>
         </motion.div>
       )}

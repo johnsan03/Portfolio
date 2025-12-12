@@ -48,72 +48,76 @@ The portfolio includes three engaging games that showcase creativity:
    - Score and missed count tracking
    - Increasing difficulty
 
-## 🗄️ Database & GitHub Pages Setup
+## 🗄️ Visitor Tracking & Likes Setup
 
-The portfolio uses a **GitHub-based file storage system** that stores all visitor data, visits, and likes in a `database.json` file in your GitHub repository. This works perfectly with GitHub Pages and ensures all users see the same counts and statistics.
+The portfolio uses **Counter.dev** for secure visitor tracking and **localStorage** for likes. This approach is perfect for GitHub Pages - no backend server or API keys needed!
 
 ### How It Works
 
-- Data is stored in a `database.json` file in your GitHub repository
-- The frontend uses GitHub API to read and write this file
-- Falls back to localStorage if GitHub API is unavailable
-- No backend server required - perfect for GitHub Pages!
+- **Visitor Tracking**: Uses [Counter.dev](https://counter.dev) - a free, privacy-friendly visitor counter
+  - Tracks unique visitors automatically via a lightweight script
+  - No API keys or authentication required
+  - Data stored securely on Counter.dev servers
+  - View stats at https://counter.dev
+
+- **Likes**: Stored in browser localStorage (client-side only)
+  - Each unique visitor can like once
+  - No server writes needed - completely secure
+  - Works offline
 
 ### Setup Instructions
 
-1. **Create a GitHub Personal Access Token**:
-   - Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
-   - Click "Generate new token (classic)"
-   - Give it a name like "Portfolio Database"
-   - Select scope: `repo` (full control of private repositories)
-   - Click "Generate token"
-   - **Copy the token immediately** (you won't see it again!)
+1. **Get Your Counter.dev Username**:
+   - Use your GitHub username (e.g., `johnsan`) or any unique ID
+   - For multiple pages/repos, use format: `username/repo-name` (e.g., `johnsan/portfolio`)
 
-2. **Configure Environment Variables**:
+2. **Update the Counter.dev Script in `index.html`**:
    
-   Create a `.env` file in the project root:
+   Open `index.html` and find this line near the bottom:
+   ```html
+   <script src="https://counter.dev/track.js?username=YOUR_USERNAME&st=1"></script>
+   ```
+   
+   Replace `YOUR_USERNAME` with your counter.dev username:
+   ```html
+   <script src="https://counter.dev/track.js?username=johnsan&st=1"></script>
+   ```
+
+3. **Configure Environment Variable** (Optional - for API stats):
+   
+   Create or update `.env` file in the project root:
    ```env
-   VITE_GITHUB_REPO=your-username/your-repo-name
-   VITE_GITHUB_TOKEN=your_personal_access_token_here
+   VITE_COUNTER_DEV_USERNAME=your-username
    ```
    
-   Replace:
-   - `your-username` with your GitHub username
-   - `your-repo-name` with your repository name (e.g., `Portfolio`)
-   - `your_personal_access_token_here` with the token you just created
+   Replace `your-username` with your counter.dev username (same as in index.html)
 
-3. **Create the Database File** (Optional - will be created automatically):
-   
-   You can create an initial `database.json` file in your repository root:
-   ```json
-   {
-     "visits": {
-       "totalVisits": 0,
-       "uniqueVisits": 0,
-       "lastVisit": null,
-       "firstVisit": null,
-       "visitors": {}
-     },
-     "likes": {
-       "totalLikes": 0,
-       "likedVisitors": {},
-       "likeHistory": []
-     },
-     "metadata": {
-       "createdAt": "2024-01-01T00:00:00.000Z",
-       "lastUpdated": "2024-01-01T00:00:00.000Z"
-     }
-   }
-   ```
+4. **That's It!** 🎉
+   - Counter.dev script automatically tracks visits
+   - No API keys, tokens, or authentication needed
+   - Starts counting immediately when deployed
 
-4. **Add to .gitignore** (Important):
-   
-   Make sure `.env` is in your `.gitignore` to keep your token secret:
-   ```
-   .env
-   .env.local
-   .env.production
-   ```
+### View Your Stats
+
+- Visit https://counter.dev
+- Enter your username to see your dashboard
+- View total visits, unique visitors, and trends
+- Similar to GitHub's Traffic insights
+
+### Features
+
+- ✅ **Free & Privacy-Friendly**: No personal data collected
+- ✅ **GDPR Compliant**: No cookies, anonymized IPs
+- ✅ **Lightweight**: Script is under 1KB
+- ✅ **Reliable**: Works even if Counter.dev is temporarily down (caches)
+- ✅ **Multiple Pages**: Use different IDs for different pages/repos
+
+### Likes System
+
+- Likes are stored in browser localStorage
+- Each visitor can like only once (tracked by unique visitor ID)
+- No server writes - completely secure
+- Works offline
 
 ### GitHub Pages Deployment
 
@@ -129,24 +133,10 @@ The portfolio uses a **GitHub-based file storage system** that stores all visito
    - Folder: `/dist`
    - Click Save
 
-3. **Set GitHub Secrets for GitHub Actions** (Alternative):
-   
-   If using GitHub Actions for deployment, add secrets:
-   - `VITE_GITHUB_REPO`: Your repo (e.g., `username/repo`)
-   - `VITE_GITHUB_TOKEN`: Your personal access token
-
-### Fallback Behavior
-
-- If GitHub API is unavailable, the app falls back to localStorage
-- Data will be stored locally but won't be shared across users
-- Once GitHub API is available again, data syncs automatically
-
-### Security Notes
-
-- ⚠️ **Never commit your `.env` file** - it contains your GitHub token
-- The token only needs `repo` scope for private repos, or `public_repo` for public repos
-- Consider using a separate GitHub account or repository for the database file
-- The token is exposed in the frontend bundle, so use a token with minimal permissions
+3. **Verify Counter.dev Script**:
+   - After deployment, check your site's HTML source
+   - Make sure the counter.dev script is present with your username
+   - Visit your site - it will start tracking immediately!
 
 ## 🚀 Getting Started
 
