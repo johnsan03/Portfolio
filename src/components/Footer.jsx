@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { FaHeart } from 'react-icons/fa';
+import VisitCounter from './VisitCounter';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -7,6 +8,7 @@ const Footer = () => {
   return (
     <footer className="footer">
       <div className="container">
+        <VisitCounter />
         <motion.div
           className="footer-content"
           initial={{ opacity: 0 }}
