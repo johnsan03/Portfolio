@@ -367,7 +367,7 @@ const VisitCounter = () => {
           <span className="count-label">Likes</span>
         </motion.div>
       </div>
-      <div className="db-actions">
+      {/* <div className="db-actions">
         <motion.button
           className="db-action-btn export-btn"
           onClick={handleExport}
@@ -389,7 +389,7 @@ const VisitCounter = () => {
           <FaUpload />
           <span>Import Data</span>
         </label>
-      </div>
+      </div> */}
     </motion.div>
   );
 };
