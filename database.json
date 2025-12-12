@@ -1,10 +1,16 @@
 {
   "visits": {
-    "totalVisits": 0,
-    "uniqueVisits": 0,
-    "lastVisit": null,
-    "firstVisit": null,
-    "visitors": {}
+    "totalVisits": 1,
+    "uniqueVisits": 1,
+    "lastVisit": "2025-12-12T18:53:46.911Z",
+    "firstVisit": "2025-12-12T18:53:46.911Z",
+    "visitors": {
+      "visitor_1765557658411_434r1dbji": {
+        "firstVisit": "2025-12-12T18:53:46.911Z",
+        "lastVisit": "2025-12-12T18:53:46.911Z",
+        "visitCount": 1
+      }
+    }
   },
   "likes": {
     "totalLikes": 0,
@@ -13,6 +19,6 @@
   },
   "metadata": {
     "createdAt": "2025-12-12T17:59:36.108Z",
-    "lastUpdated": "2025-12-12T17:59:36.108Z"
+    "lastUpdated": "2025-12-12T18:53:47.234Z"
   }
 }
