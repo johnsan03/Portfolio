@@ -62,6 +62,13 @@ const VisitCounter = () => {
       } catch (error) {
         console.error('Error loading data:', error);
         setConfigError(true);
+        
+        // Show specific error message for authentication issues
+        if (error.message && error.message.includes('authentication failed')) {
+          console.error('🔴 GitHub Authentication Error:', error.message);
+          alert('GitHub authentication failed. Please check:\n1. Your VITE_GITHUB_TOKEN in .env file\n2. Token has "repo" scope (or "public_repo" for public repos)\n3. Token is not expired\n\nSee console for details.');
+        }
+        
         // Set default values on error
         setVisitData({
           totalVisits: 0,
@@ -174,7 +181,7 @@ const VisitCounter = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {configError && !isGitHubConfigured() && (
+      {configError && (
         <motion.div
           className="server-error-banner"
           initial={{ opacity: 0, y: -20 }}
@@ -183,7 +190,9 @@ const VisitCounter = () => {
         >
           <span className="error-icon">⚠️</span>
           <span className="error-text">
-            GitHub configuration not set. Using localStorage only. See README for setup instructions.
+            {!isGitHubConfigured() 
+              ? 'GitHub configuration not set. Using localStorage only. See README for setup instructions.'
+              : 'GitHub API error. Check your token and repository name in .env file. Using localStorage fallback.'}
           </span>
         </motion.div>
       )}

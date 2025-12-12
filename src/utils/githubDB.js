@@ -32,12 +32,18 @@ const readFromGitHub = async () => {
     throw new Error('GitHub configuration not set');
   }
 
+  // Validate token format
+  if (!GITHUB_TOKEN.startsWith('ghp_') && !GITHUB_TOKEN.startsWith('github_pat_')) {
+    console.warn('GitHub token format may be incorrect. Should start with "ghp_" or "github_pat_"');
+  }
+
   try {
     const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${DB_FILE_PATH}?ref=${DB_BRANCH}`;
     const response = await fetch(url, {
       headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Authorization': `Bearer ${GITHUB_TOKEN}`, // Use Bearer instead of token
         'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'Portfolio-App', // GitHub API requires User-Agent
       },
     });
 
@@ -46,7 +52,20 @@ const readFromGitHub = async () => {
         // File doesn't exist yet, return default
         return getDefaultDatabase();
       }
-      throw new Error(`GitHub API error: ${response.statusText}`);
+      
+      // Handle authentication errors
+      if (response.status === 401) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`GitHub authentication failed: ${errorData.message || 'Invalid token or insufficient permissions'}. Please check your VITE_GITHUB_TOKEN in .env file.`);
+      }
+      
+      if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`GitHub API forbidden: ${errorData.message || 'Token may not have required permissions (repo scope)'}.`);
+      }
+      
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`GitHub API error (${response.status}): ${errorData.message || response.statusText}`);
     }
 
     const data = await response.json();
@@ -64,6 +83,11 @@ const readFromGitHub = async () => {
 const writeToGitHub = async (db, sha = null) => {
   if (!GITHUB_TOKEN || !GITHUB_REPO || GITHUB_REPO === 'your-username/your-repo') {
     throw new Error('GitHub configuration not set');
+  }
+
+  // Validate token format
+  if (!GITHUB_TOKEN.startsWith('ghp_') && !GITHUB_TOKEN.startsWith('github_pat_')) {
+    console.warn('GitHub token format may be incorrect. Should start with "ghp_" or "github_pat_"');
   }
 
   try {
@@ -85,16 +109,28 @@ const writeToGitHub = async (db, sha = null) => {
     const response = await fetch(url, {
       method: 'PUT',
       headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Authorization': `Bearer ${GITHUB_TOKEN}`, // Use Bearer instead of token
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
+        'User-Agent': 'Portfolio-App', // GitHub API requires User-Agent
       },
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`GitHub API error: ${errorData.message || response.statusText}`);
+      // Handle authentication errors
+      if (response.status === 401) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`GitHub authentication failed: ${errorData.message || 'Invalid token or insufficient permissions'}. Please check your VITE_GITHUB_TOKEN in .env file.`);
+      }
+      
+      if (response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`GitHub API forbidden: ${errorData.message || 'Token may not have required permissions (repo scope)'}.`);
+      }
+      
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`GitHub API error (${response.status}): ${errorData.message || response.statusText}`);
     }
 
     return await response.json();
