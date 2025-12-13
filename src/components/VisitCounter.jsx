@@ -42,19 +42,20 @@ const VisitCounter = () => {
           isNewVisit: visitInfo.isNewVisit,
         });
 
-        // Load like data
+        // Load like data - ALWAYS check database for like status
+        // This ensures the like button state is correct even after refresh
+        // Force fresh check on initial load to ensure accurate state
         const [likeCount, liked] = await Promise.all([
           getLikeCount(),
-          hasLiked(),
+          hasLiked(true), // Force fresh check from database (bypass cache)
         ]);
 
         setLikeData({
           totalLikes: likeCount,
-          hasLiked: liked,
+          hasLiked: liked, // This should be true if visitor already liked
         });
         setConfigError(false);
       } catch (error) {
-        console.error('Error loading data:', error);
         setConfigError(true);
         
         // Set default values on error
@@ -76,34 +77,54 @@ const VisitCounter = () => {
       }
     };
 
+    // Load data immediately on mount (including like status from database)
     loadData();
     
-    // Refresh stats periodically to show updates
+    // Refresh stats periodically to show updates (increased interval significantly to reduce API calls)
     const interval = setInterval(() => {
       loadData();
-    }, 5000); // Refresh every 5 seconds
+    }, 120000); // Refresh every 2 minutes (reduced API calls significantly)
 
     return () => clearInterval(interval);
   }, []);
 
   const handleLike = async () => {
-    if (likeData.hasLiked || isProcessing) return;
+    // Double-check if already liked (in case state is out of sync)
+    if (likeData.hasLiked || isProcessing) {
+      // Re-check from database to ensure state is correct
+      const likedStatus = await hasLiked();
+      if (likedStatus) {
+        setLikeData(prev => ({ ...prev, hasLiked: true }));
+      }
+      return;
+    }
 
     setIsProcessing(true);
     try {
+      // Check one more time before posting (defensive check)
+      const alreadyLiked = await hasLiked();
+      if (alreadyLiked) {
+        setLikeData(prev => ({ ...prev, hasLiked: true }));
+        setIsProcessing(false);
+        return;
+      }
+
       const result = await addLike();
 
       if (result.success) {
         setLikeData({
           totalLikes: result.totalLikes,
-          hasLiked: true,
+          hasLiked: true, // Set to true after successful like
         });
         setConfigError(false);
       } else {
+        // If backend says already liked, update state
+        if (result.message && result.message.includes('already')) {
+          setLikeData(prev => ({ ...prev, hasLiked: true }));
+        }
         alert(result.message || 'Failed to add like');
       }
     } catch (error) {
-      console.error('Error adding like:', error);
       setConfigError(true);
       alert('Error adding like. Please check your GitHub configuration.');
     } finally {
@@ -115,7 +136,6 @@ const VisitCounter = () => {
     try {
       exportDatabase();
     } catch (error) {
-      console.error('Error exporting database:', error);
       alert('Error exporting database. Please try again.');
     }
   };
@@ -153,7 +173,6 @@ const VisitCounter = () => {
             hasLiked: liked,
           });
         } catch (error) {
-          console.error('Error parsing file:', error);
           alert('Error importing database. Please check the file format.');
         } finally {
           setIsProcessing(false);
@@ -162,7 +181,6 @@ const VisitCounter = () => {
       };
       reader.readAsText(file);
     } catch (error) {
-      console.error('Error importing database:', error);
       alert('Error importing database. Please check the file format.');
       setIsProcessing(false);
       event.target.value = '';

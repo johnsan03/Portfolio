@@ -1,116 +1,109 @@
 /**
  * Counter API Database Utility
- * Uses counterapi.dev API for visitor tracking and likes
+ * Uses Xano backend API for visitor tracking and likes
  */
 
-const COUNTER_API_BASE = 'https://api.counterapi.dev/v2/johns-team-1-2099/first-counter-2099';
-const COUNTER_API_KEY = import.meta.env.VITE_COUNTER_API_KEY || ''; // Will be provided later
-
-// CORS proxy options (fallback if direct API fails)
-const CORS_PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?',
-  'https://api.codetabs.com/v1/proxy?quest=',
-];
+const API_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:WpZv-jLF';
+const API_KEY = import.meta.env.VITE_API_KEY || ''; // Optional API key if needed
 
 const VISITOR_ID_KEY = 'portfolio_visitor_id';
+const VISITOR_DB_ID_KEY = 'portfolio_visitor_db_id'; // Store the database ID from visitor table
 const LOCAL_STORAGE_KEY = 'portfolio_database_local';
 const COUNTER_STATS_CACHE_KEY = 'counter_api_stats_cache';
-const COUNTER_STATS_CACHE_DURATION = 30000; // Cache for 30 seconds
+const COUNTER_STATS_CACHE_DURATION = 300000; // Cache for 5 minutes (reduced API calls significantly)
+
+// In-memory cache to prevent duplicate simultaneous requests
+let pendingRequests = {
+  counters: null,
+  visitors: null,
+  stats: null,
+};
+
+// Rate limiting - track last request time
+let lastRequestTime = {
+  counters: 0,
+  visitors: 0,
+};
+const MIN_REQUEST_INTERVAL = 2000; // Minimum 2 seconds between requests to same endpoint
 
 /**
- * Make API request with CORS proxy fallback
+ * Make API request to Xano backend with rate limiting and 429 handling
  */
-const makeApiRequest = async (url, options = {}) => {
-  // Try direct request first
+const makeApiRequest = async (endpoint, options = {}) => {
+  // Rate limiting - prevent too frequent requests
+  const endpointType = endpoint.includes('/counter') ? 'counters' : 'visitors';
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime[endpointType];
+  
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastRequestTime[endpointType] = Date.now();
+
+  const url = `${API_BASE_URL}${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` }),
+    ...(options.headers || {}),
+  };
+
   try {
     const response = await fetch(url, {
       ...options,
+      headers,
       mode: 'cors',
       credentials: 'omit',
     });
-    
-    // Check if response is valid (not CORS blocked)
-    if (response.ok || (response.status >= 200 && response.status < 600)) {
-      return response;
-    }
-  } catch (error) {
-    // If CORS error or network error, try with proxy
-    const isCorsError = error.name === 'TypeError' || 
-                       error.message.includes('CORS') || 
-                       error.message.includes('Failed to fetch') ||
-                       error.message.includes('NetworkError') ||
-                       error.message.includes('network');
-    
-    if (isCorsError) {
-      console.warn('CORS/Network error detected, trying with proxy...');
+
+    // Handle 429 Too Many Requests
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After');
+      const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 10000; // Default 10 seconds
+      await new Promise(resolve => setTimeout(resolve, waitTime));
       
-      // Try each CORS proxy
-      for (const proxy of CORS_PROXIES) {
-        try {
-          let proxyUrl;
-          let proxyOptions = {
-            method: options.method || 'GET',
-            headers: {
-              'Accept': 'application/json',
-            },
-            mode: 'cors',
-            credentials: 'omit',
-          };
-          
-          // Handle different proxy formats
-          if (proxy.includes('allorigins.win')) {
-            // allorigins.win format
-            proxyUrl = `${proxy}${encodeURIComponent(url)}`;
-            // For POST, we need to send data differently
-            if (options.method === 'POST' && options.headers) {
-              // allorigins doesn't forward headers well, so we'll encode them in URL or body
-              proxyOptions.headers = {
-                'Content-Type': 'application/json',
-              };
-            }
-          } else if (proxy.includes('corsproxy.io')) {
-            // corsproxy.io format
-            proxyUrl = `${proxy}${encodeURIComponent(url)}`;
-            if (options.headers) {
-              // Try to preserve headers
-              proxyOptions.headers = {
-                ...options.headers,
-                'Accept': 'application/json',
-              };
-            }
-          } else {
-            // codetabs format
-            proxyUrl = `${proxy}${encodeURIComponent(url)}`;
-            if (options.headers) {
-              proxyOptions.headers = {
-                ...options.headers,
-                'Accept': 'application/json',
-              };
-            }
-          }
-          
-          const response = await fetch(proxyUrl, proxyOptions);
-          
-          if (response.ok) {
-            return response;
-          }
-        } catch (proxyError) {
-          // Try next proxy
-          console.warn(`Proxy ${proxy} failed, trying next...`);
-          continue;
-        }
+      // Retry once after waiting
+      const retryResponse = await fetch(url, {
+        ...options,
+        headers,
+        mode: 'cors',
+        credentials: 'omit',
+      });
+      
+      if (!retryResponse.ok && retryResponse.status !== 429) {
+        const errorText = await retryResponse.text().catch(() => 'Unknown error');
+        throw new Error(`API request failed: ${retryResponse.status} ${errorText}`);
       }
       
-      // If all proxies failed, throw original error
-      console.error('All CORS proxies failed, falling back to cached data');
+      return retryResponse;
     }
-    
+
+    if (!response.ok) {
+      // Try to get detailed error message from response
+      let errorText = 'Unknown error';
+      try {
+        const errorData = await response.json().catch(() => null);
+        if (errorData) {
+          errorText = JSON.stringify(errorData);
+        } else {
+          errorText = await response.text().catch(() => 'Unknown error');
+        }
+      } catch (e) {
+        errorText = await response.text().catch(() => 'Unknown error');
+      }
+      throw new Error(`API request failed: ${response.status} ${errorText}`);
+    }
+
+    return response;
+  } catch (error) {
+    // If it's a 429 error from fetch (network level), wait and return cached data
+    if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+      throw error;
+    }
     throw error;
   }
-  
-  // If we get here, direct request might have failed but wasn't CORS
-  throw new Error('Request failed');
 };
 
 /**
@@ -150,132 +143,210 @@ const getDefaultDatabase = () => {
 };
 
 /**
- * Get counter stats from counterapi.dev
- * Fetches the current counter value and statistics
+ * Fetch counters with caching and request deduplication
  */
-const getCounterStats = async () => {
+const fetchCounters = async () => {
   // Check cache first
-  try {
-    const cached = localStorage.getItem(COUNTER_STATS_CACHE_KEY);
-    if (cached) {
-      const cachedData = JSON.parse(cached);
-      const now = Date.now();
-      if (cachedData.timestamp && (now - cachedData.timestamp) < COUNTER_STATS_CACHE_DURATION) {
-        return {
-          totalVisits: cachedData.totalVisits || 0,
-          uniqueVisits: cachedData.uniqueVisits || 0,
-          counterValue: cachedData.counterValue || 0,
-        };
-      }
-    }
-  } catch (e) {
-    // Ignore cache errors
-  }
-
-  // If no API key, return cached or default
-  if (!COUNTER_API_KEY) {
-    console.warn('⚠️ Counter API key not configured. Please set VITE_COUNTER_API_KEY in your .env file');
+  const cacheKey = 'counters_cache';
     try {
-      const cached = localStorage.getItem(COUNTER_STATS_CACHE_KEY);
+      const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
         const cachedData = JSON.parse(cached);
-        return {
-          totalVisits: cachedData.totalVisits || 0,
-          uniqueVisits: cachedData.uniqueVisits || 0,
-          counterValue: cachedData.counterValue || 0,
-        };
+        const now = Date.now();
+        if (cachedData.timestamp && (now - cachedData.timestamp) < COUNTER_STATS_CACHE_DURATION) {
+          return cachedData.data;
+        }
       }
-    } catch (e) {
-      // Ignore
-    }
-    return {
-      totalVisits: 0,
-      uniqueVisits: 0,
-      counterValue: 0,
-    };
-  }
-
-  try {
-    // Fetch counter value with CORS proxy fallback
-    let valueResponse;
-    let statsResponse;
-    
-    try {
-      valueResponse = await makeApiRequest(COUNTER_API_BASE, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${COUNTER_API_KEY}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      // Fetch stats with CORS proxy fallback
-      statsResponse = await makeApiRequest(`${COUNTER_API_BASE}/stats`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${COUNTER_API_KEY}`,
-          'Accept': 'application/json',
-        },
-      });
-    } catch (requestError) {
-      console.error('Error making API requests:', requestError);
-      // Fall through to use cached data
-      throw requestError;
-    }
-
-    let counterValue = 0;
-    let stats = {};
-
-    if (valueResponse && valueResponse.ok) {
-      try {
-        const valueData = await valueResponse.json();
-        counterValue = valueData.value || valueData.count || valueData.counter || 0;
-      } catch (parseError) {
-        console.warn('Error parsing counter value response:', parseError);
-      }
-    }
-
-    if (statsResponse && statsResponse.ok) {
-      try {
-        stats = await statsResponse.json();
-      } catch (parseError) {
-        console.warn('Error parsing stats response:', parseError);
-      }
-    }
-
-    const result = {
-      totalVisits: counterValue || stats.total || stats.visits || stats.count || 0,
-      uniqueVisits: stats.unique || stats.uniqueVisitors || stats.uniques || 0,
-      counterValue: counterValue,
-    };
-
-    // Cache the result
-    try {
-      localStorage.setItem(COUNTER_STATS_CACHE_KEY, JSON.stringify({
-        ...result,
-        timestamp: Date.now(),
-      }));
     } catch (e) {
       // Ignore cache errors
     }
 
-    return result;
+    // Deduplicate simultaneous requests
+    if (pendingRequests.counters) {
+      return pendingRequests.counters;
+    }
+
+  try {
+    pendingRequests.counters = makeApiRequest('/counter', { method: 'GET' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await response.json();
+          // Cache the result
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              data,
+              timestamp: Date.now(),
+            }));
+          } catch (e) {
+            // Ignore cache errors
+          }
+          return data;
+        }
+        return [];
+      })
+      .catch(async (error) => {
+        // If 429 error, return cached data if available
+        if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+          try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+              const cachedData = JSON.parse(cached);
+              return cachedData.data || [];
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }
+        throw error;
+      })
+      .finally(() => {
+        pendingRequests.counters = null;
+      });
+
+    return await pendingRequests.counters;
   } catch (error) {
-    console.error('Error fetching counter stats:', error);
-    // Return cached data if available
+    pendingRequests.counters = null;
+    
+    // Try to return cached data even if expired
     try {
-      const cached = localStorage.getItem(COUNTER_STATS_CACHE_KEY);
+      const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
         const cachedData = JSON.parse(cached);
-        return {
-          totalVisits: cachedData.totalVisits || 0,
-          uniqueVisits: cachedData.uniqueVisits || 0,
-          counterValue: cachedData.counterValue || 0,
-        };
+        return cachedData.data || [];
       }
     } catch (e) {
       // Ignore
     }
+    
+    return [];
+  }
+};
+
+/**
+ * Fetch visitors with caching and request deduplication
+ */
+const fetchVisitors = async () => {
+  // Check cache first
+  const cacheKey = 'visitors_cache';
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        const now = Date.now();
+        if (cachedData.timestamp && (now - cachedData.timestamp) < COUNTER_STATS_CACHE_DURATION) {
+          return cachedData.data;
+        }
+      }
+    } catch (e) {
+      // Ignore cache errors
+    }
+
+    // Deduplicate simultaneous requests
+    if (pendingRequests.visitors) {
+      return pendingRequests.visitors;
+    }
+
+  try {
+    pendingRequests.visitors = makeApiRequest('/visitor', { method: 'GET' })
+      .then(async (response) => {
+        if (response.ok) {
+          const data = await response.json();
+          // Cache the result
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              data,
+              timestamp: Date.now(),
+            }));
+          } catch (e) {
+            // Ignore cache errors
+          }
+          return data;
+        }
+        return [];
+      })
+      .catch(async (error) => {
+        // If 429 error, return cached data if available
+        if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+          try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+              const cachedData = JSON.parse(cached);
+              return cachedData.data || [];
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }
+        throw error;
+      })
+      .finally(() => {
+        pendingRequests.visitors = null;
+      });
+
+    return await pendingRequests.visitors;
+  } catch (error) {
+    pendingRequests.visitors = null;
+    
+    // Try to return cached data even if expired
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        return cachedData.data || [];
+      }
+    } catch (e) {
+      // Ignore
+    }
+    
+    return [];
+  }
+};
+
+/**
+ * Get counter stats from Xano backend (database only, with caching)
+ * Fetches all counter records and calculates totals
+ * Unique visitors count comes from backend (count of distinct visitor_id records)
+ */
+const getCounterStats = async () => {
+  try {
+    // Fetch both in parallel, but reuse cached/deduplicated requests
+    const [counters, visitors] = await Promise.all([
+      fetchCounters(),
+      fetchVisitors(),
+    ]);
+
+    let counterValue = 0;
+    let uniqueVisits = 0;
+    let totalVisits = 0;
+
+    // Process counters (for likes)
+    if (Array.isArray(counters)) {
+      counterValue = counters.reduce((sum, counter) => {
+        return sum + (counter.value || counter.count || 0);
+      }, 0);
+    } else if (counters && counters.value !== undefined) {
+      counterValue = counters.value || counters.count || 0;
+    }
+
+    // Process visitors
+    // Unique visitors = count of distinct visitor_id records in database
+    if (Array.isArray(visitors)) {
+      uniqueVisits = visitors.length; // Each record is a unique visitor
+      
+      // Total visits = sum of all visit_count from all visitors
+      totalVisits = visitors.reduce((sum, visitor) => {
+        return sum + (visitor.visit_count || 1); // If visit_count exists, use it; otherwise assume 1
+      }, 0);
+    } else if (visitors && visitors.length !== undefined) {
+      uniqueVisits = visitors.length;
+    }
+
+    return {
+      totalVisits: totalVisits || counterValue, // Use total visits from visitors, fallback to counter value
+      uniqueVisits: uniqueVisits,
+      counterValue: counterValue,
+    };
+  } catch (error) {
     return {
       totalVisits: 0,
       uniqueVisits: 0,
@@ -285,102 +356,185 @@ const getCounterStats = async () => {
 };
 
 /**
- * Record a new visit (increment counter via API and track locally)
+ * Get visitor's database ID (from visitor table)
+ * This is the primary key ID that links counter table to visitor table
+ */
+export const getVisitorDbId = async () => {
+  const visitorId = getVisitorId();
+  
+  // Check if we already have the database ID stored
+  const storedDbId = localStorage.getItem(VISITOR_DB_ID_KEY);
+  if (storedDbId) {
+    return storedDbId;
+  }
+  
+  // If not stored, fetch from database by searching for this visitor_id
+  try {
+    const visitors = await fetchVisitors();
+    if (Array.isArray(visitors)) {
+      const visitor = visitors.find(v => (v.visitor_id === visitorId) || (v.visitorId === visitorId));
+      if (visitor && visitor.id) {
+        // Store the database ID for future use
+        localStorage.setItem(VISITOR_DB_ID_KEY, visitor.id.toString());
+        return visitor.id.toString();
+      }
+    }
+  } catch (error) {
+    // Error fetching visitor database ID
+  }
+  
+  return null;
+};
+
+/**
+ * Record a new visit (POST to /visitor endpoint - database only)
+ * Uses sessionStorage to prevent duplicate POSTs in the same session
+ * Backend handles unique visitor logic and returns the database ID
  */
 export const recordVisit = async () => {
   const visitorId = getVisitorId();
   
-  // Check if this is a new session
-  const sessionKey = `portfolio_session_${visitorId}`;
-  const hasSession = sessionStorage.getItem(sessionKey);
+  // Check if we've already posted this visit in this session (using sessionStorage)
+  // sessionStorage clears when tab closes, so this prevents duplicate POSTs per session
+  // Use a more persistent check to prevent counting on page refresh
+  const visitPostedKey = `visit_posted_${visitorId}`;
+  const visitAlreadyPosted = sessionStorage.getItem(visitPostedKey);
+  
+  // Also check if we've visited in this browser session (even across page refreshes)
+  // This prevents counting multiple times when user refreshes the page
+  const sessionVisitKey = `session_visit_${visitorId}`;
+  const sessionVisitPosted = sessionStorage.getItem(sessionVisitKey);
 
-  if (!hasSession) {
-    // Mark session
-    sessionStorage.setItem(sessionKey, 'true');
+  // Only POST if we haven't posted in this session AND haven't posted in this browser session
+  if (!visitAlreadyPosted && !sessionVisitPosted) {
+    // Mark that we've posted (both keys to prevent refresh counting)
+    sessionStorage.setItem(visitPostedKey, 'true');
+    sessionStorage.setItem(sessionVisitKey, 'true'); // This persists across page refreshes in same tab
     
-    // Increment counter via API if API key is configured
-    if (COUNTER_API_KEY) {
-      try {
-        await makeApiRequest(`${COUNTER_API_BASE}/up`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${COUNTER_API_KEY}`,
-            'Accept': 'application/json',
-          },
-        });
-        // Clear cache to force refresh
-        localStorage.removeItem(COUNTER_STATS_CACHE_KEY);
-      } catch (error) {
-        console.error('Error incrementing counter:', error);
-        // Continue even if API call fails - local tracking still works
-      }
-    }
+    const now = new Date().toISOString();
     
-    // Update local database for display
+    // POST visitor to database - backend will handle unique visitor logic
     try {
-      const local = localStorage.getItem(LOCAL_STORAGE_KEY);
-      const db = local ? JSON.parse(local) : getDefaultDatabase();
-      const now = new Date().toISOString();
+      const response = await makeApiRequest('/visitor', {
+        method: 'POST',
+        body: JSON.stringify({
+          visitor_id: visitorId,
+          last_visit_at: now,
+        }),
+      });
       
-      const isNewVisitor = !db.visits.visitors[visitorId];
+      let isNewVisitor = false;
+      let visitorDbId = null;
       
-      // Increment total visits locally
-      db.visits.totalVisits = (db.visits.totalVisits || 0) + 1;
-      
-      if (isNewVisitor) {
-        // Increment unique visits
-        db.visits.uniqueVisits = (db.visits.uniqueVisits || 0) + 1;
-        db.visits.visitors[visitorId] = {
-          firstVisit: now,
-          lastVisit: now,
-          visitCount: 1,
-        };
-        if (!db.visits.firstVisit) {
-          db.visits.firstVisit = now;
+      // Check response from backend to get the database ID
+      if (response.ok) {
+        try {
+          const responseData = await response.json();
+          // Backend should return { id: 123, is_new_visitor: true/false, visit_count: X }
+          // The 'id' is the primary key from visitor table
+          visitorDbId = responseData.id || responseData.ID || responseData.db_id;
+          isNewVisitor = responseData.is_new_visitor || responseData.isNewVisitor || false;
+          
+          // Store the database ID for linking to counter table
+          if (visitorDbId) {
+            localStorage.setItem(VISITOR_DB_ID_KEY, visitorDbId.toString());
+          }
+        } catch (e) {
+          // If response doesn't have JSON, try to get ID from response
+          isNewVisitor = true;
         }
-      } else {
-        db.visits.visitors[visitorId].lastVisit = now;
-        db.visits.visitors[visitorId].visitCount += 1;
       }
-
-      db.visits.lastVisit = now;
-      db.metadata.lastUpdated = now;
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
+      
+      // If we didn't get the ID from response, fetch it from database
+      if (!visitorDbId) {
+        visitorDbId = await getVisitorDbId();
+      }
+      
+      // Clear visitor cache to force refresh (delayed to avoid rate limit)
+      setTimeout(() => {
+        try {
+          sessionStorage.removeItem('visitors_cache');
+        } catch (e) {
+          // Ignore
+        }
+      }, 5000);
       
       return {
         isNewVisit: true,
         isNewVisitor: isNewVisitor,
         visitorId,
+        visitorDbId, // Return the database ID
       };
     } catch (error) {
-      console.error('Error updating local visit data:', error);
+      // If rate limited, remove the posted flag so we can retry later
+      if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+        sessionStorage.removeItem(visitPostedKey);
+        sessionStorage.removeItem(sessionVisitKey);
+      }
       return {
         isNewVisit: true,
         isNewVisitor: false,
         visitorId,
+        visitorDbId: null,
       };
     }
   }
 
+  // Already posted in this session, but try to get the database ID if we have it
+  const visitorDbId = await getVisitorDbId();
+  
   return {
     isNewVisit: false,
     isNewVisitor: false,
     visitorId,
+    visitorDbId,
   };
 };
 
 /**
- * Get visit statistics (from counterapi.dev API + local data for dates)
+ * Get visit statistics (from Xano backend database only, optimized)
  */
 export const getVisitStats = async () => {
   const visitorId = getVisitorId();
   
-  // Try to get stats from counterapi.dev API
-  const counterStats = await getCounterStats();
+  // Fetch both counters and visitors in parallel (reusing cached/deduplicated requests)
+  const [counterStats, visitors] = await Promise.all([
+    getCounterStats(),
+    fetchVisitors(), // Reuses cache/deduplication
+  ]);
   
-  // Get local data for dates and visitor info
-  const local = localStorage.getItem(LOCAL_STORAGE_KEY);
-  const localDb = local ? JSON.parse(local) : getDefaultDatabase();
+  let latestLastVisit = null;
+  let firstVisit = null;
+  
+  try {
+    if (Array.isArray(visitors) && visitors.length > 0) {
+      // Find the latest last_visit_at
+      const sortedByLastVisit = visitors
+        .filter(v => v.last_visit_at)
+        .sort((a, b) => new Date(b.last_visit_at) - new Date(a.last_visit_at));
+      
+      if (sortedByLastVisit.length > 0) {
+        latestLastVisit = sortedByLastVisit[0].last_visit_at;
+      }
+      
+      // Find the earliest first visit (or first created visitor)
+      const sortedByFirstVisit = visitors
+        .filter(v => v.first_visit_at || v.created_at || v.last_visit_at)
+        .sort((a, b) => {
+          const dateA = new Date(a.first_visit_at || a.created_at || a.last_visit_at);
+          const dateB = new Date(b.first_visit_at || b.created_at || b.last_visit_at);
+          return dateA - dateB;
+        });
+      
+      if (sortedByFirstVisit.length > 0) {
+        firstVisit = sortedByFirstVisit[0].first_visit_at || 
+                    sortedByFirstVisit[0].created_at || 
+                    sortedByFirstVisit[0].last_visit_at;
+      }
+    }
+  } catch (error) {
+    // Error processing visitors data
+  }
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -401,82 +555,110 @@ export const getVisitStats = async () => {
     });
   };
 
-  // Use counter API stats for visit counts (if available), otherwise fallback to local
-  const totalVisits = counterStats.totalVisits > 0 
-    ? counterStats.totalVisits 
-    : (localDb.visits.totalVisits || 0);
-  
-  const uniqueVisits = counterStats.uniqueVisits > 0 
-    ? counterStats.uniqueVisits 
-    : (localDb.visits.uniqueVisits || 0);
-
+  // Use database stats only
   return {
-    totalVisits: totalVisits,
-    uniqueVisits: uniqueVisits,
-    lastVisit: localDb.visits.lastVisit,
-    firstVisit: localDb.visits.firstVisit,
+    totalVisits: counterStats.totalVisits || 0,
+    uniqueVisits: counterStats.uniqueVisits || 0,
+    lastVisit: latestLastVisit,
+    firstVisit: firstVisit,
     visitorId: visitorId,
-    formattedLastVisit: formatDate(localDb.visits.lastVisit),
-    formattedFirstVisit: formatDate(localDb.visits.firstVisit),
-    formattedLastVisitTime: formatTime(localDb.visits.lastVisit),
+    formattedLastVisit: formatDate(latestLastVisit),
+    formattedFirstVisit: formatDate(firstVisit),
+    formattedLastVisitTime: formatTime(latestLastVisit),
   };
 };
 
 /**
- * Check if visitor has liked (localStorage only)
+ * Check if visitor has liked (ALWAYS check database - primary source of truth)
+ * Checks if visitor_id (string) exists in counter table via Visitor_1 field
+ * Counter table has Visitor_1 field that contains visitor_id string from visitor table
+ * This ensures one like per visitor, even after page refresh
  */
-export const hasLiked = async () => {
+export const hasLiked = async (forceFresh = false) => {
   try {
-    const local = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!local) return false;
-    
-    const db = JSON.parse(local);
     const visitorId = getVisitorId();
-    return db.likes?.likedVisitors?.[visitorId] || false;
-  } catch (error) {
-    console.error('Error checking like status:', error);
+    
+    // If forceFresh is true, clear cache to get latest data
+    if (forceFresh) {
+      try {
+        sessionStorage.removeItem('counters_cache');
+        pendingRequests.counters = null; // Clear pending request too
+      } catch (e) {
+        // Ignore
+      }
+    }
+    
+    // ALWAYS check database (primary source of truth)
+    // Fetch all counter records from database
+    const counters = await fetchCounters();
+    
+    if (Array.isArray(counters) && counters.length > 0) {
+      // Check if this visitor_id (string) exists in any counter record via Visitor_1 field
+      // Counter table has Visitor_1 field that contains visitor_id string from visitor table
+      const hasLikedInDB = counters.some(counter => {
+        // Check Visitor_1 field - it should contain the visitor_id string
+        const counterVisitorId = counter.Visitor_1 || counter.visitor_1 || counter.Visitor_1_id || 
+                                 counter.visitor?.visitor_id || counter.visitor_id;
+        // Compare with visitor_id string
+        return counterVisitorId === visitorId;
+      });
+      
+      // Update sessionStorage to match database (for quick access, but DB is source of truth)
+      const likeSessionKey = `has_liked_${visitorId}`;
+      if (hasLikedInDB) {
+        sessionStorage.setItem(likeSessionKey, 'true');
+      } else {
+        sessionStorage.removeItem(likeSessionKey);
+      }
+      
+      return hasLikedInDB;
+    }
+    
+    // If no counters found, check sessionStorage as fallback
+    const likeSessionKey = `has_liked_${visitorId}`;
+    const cachedLikeStatus = sessionStorage.getItem(likeSessionKey);
+    if (cachedLikeStatus === 'true') {
+      return true;
+    }
+    
     return false;
+  } catch (error) {
+    // Fallback to sessionStorage if database check fails
+    const visitorId = getVisitorId();
+    const likeSessionKey = `has_liked_${visitorId}`;
+    const cachedLikeStatus = sessionStorage.getItem(likeSessionKey);
+    return cachedLikeStatus === 'true';
   }
 };
 
 /**
- * Get like count (from counterapi.dev counter value)
- * The counter value represents the total likes/visits
+ * Get like count (from database only)
+ * Sums all counter values from the database
  */
 export const getLikeCount = async () => {
   try {
-    // Get counter stats from API
+    // Get counter stats from database
     const counterStats = await getCounterStats();
-    // Use counter value as likes (or totalVisits as fallback)
+    // Use counter value as likes
     return counterStats.counterValue || counterStats.totalVisits || 0;
   } catch (error) {
-    console.error('Error getting like count:', error);
-    // Fallback to local storage if API fails
-    try {
-      const cached = localStorage.getItem(COUNTER_STATS_CACHE_KEY);
-      if (cached) {
-        const cachedData = JSON.parse(cached);
-        return cachedData.counterValue || cachedData.totalVisits || 0;
-      }
-    } catch (e) {
-      // Ignore
-    }
     return 0;
   }
 };
 
 /**
- * Add a like (increment counter via API)
- * Uses counterapi.dev API to increment the counter
+ * Add a like (POST to /counter endpoint - database only)
+ * Sends visitor_id (string) to backend to save in counter table
+ * Backend will link counter to visitor table using the visitor_id
+ * Ensures one like per visitor, prevents duplicate likes even after refresh
  */
 export const addLike = async () => {
   try {
     const visitorId = getVisitorId();
-    const local = localStorage.getItem(LOCAL_STORAGE_KEY);
-    const db = local ? JSON.parse(local) : getDefaultDatabase();
 
-    // Check if already liked (local check)
-    if (db.likes?.likedVisitors?.[visitorId]) {
+    // Double-check if already liked (check database first)
+    const hasLikedAlready = await hasLiked();
+    if (hasLikedAlready) {
       const currentTotal = await getLikeCount();
       return {
         success: false,
@@ -485,98 +667,95 @@ export const addLike = async () => {
       };
     }
 
-    // If no API key, just track locally
-    if (!COUNTER_API_KEY) {
-      console.warn('⚠️ Counter API key not configured. Like will only be tracked locally.');
-      // Track locally
-      if (!db.likes) {
-        db.likes = {
-          totalLikes: 0,
-          likedVisitors: {},
-          likeHistory: [],
-        };
-      }
-      db.likes.totalLikes = (db.likes.totalLikes || 0) + 1;
-      db.likes.likedVisitors[visitorId] = true;
-      db.likes.likeHistory = db.likes.likeHistory || [];
-      db.likes.likeHistory.push({
-        visitorId,
-        timestamp: new Date().toISOString(),
-      });
-      db.metadata = db.metadata || {};
-      db.metadata.lastUpdated = new Date().toISOString();
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
+    // POST counter to database
+    // Use visitor_id (string) from visitor table, not the database ID
+    // Counter table has "Visitor_1" field that should contain the visitor_id string
+    // Make sure visitor record exists first
+    const visitInfo = await recordVisit();
+    
+    // POST counter to database with Visitor_1 field containing visitor_id string
+    // Visitor_1 should be the visitor_id (string) from visitor table, not the database ID
+    const requestBody = {
+      Visitor_1: visitorId, // Use visitor_id string (unique identifier from visitor table)
+    };
+    
+    const response = await makeApiRequest('/counter', {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+    });
+
+    if (response && response.ok) {
+      // Mark as liked in sessionStorage
+      const likeSessionKey = `has_liked_${visitorId}`;
+      sessionStorage.setItem(likeSessionKey, 'true');
       
+      // Clear counter cache IMMEDIATELY to force fresh data on next check
+      try {
+        sessionStorage.removeItem('counters_cache');
+        // Also clear the pending request if any
+        pendingRequests.counters = null;
+      } catch (e) {
+        // Ignore
+      }
+      
+      // Get updated total from database (will fetch fresh data)
       const totalLikes = await getLikeCount();
+
       return {
         success: true,
-        message: 'Thank you for your like! (Local only - API key needed for server sync)',
+        message: 'Thank you for your like!',
         totalLikes: totalLikes,
       };
-    }
-
-    // Increment counter via API with CORS proxy fallback
-    try {
-      const response = await makeApiRequest(`${COUNTER_API_BASE}/up`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${COUNTER_API_KEY}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      if (response && response.ok) {
-        // Clear cache to force refresh
-        localStorage.removeItem(COUNTER_STATS_CACHE_KEY);
+    } else {
+      // Get detailed error message from response
+      let errorData = {};
+      let errorMessage = `API returned ${response.status}`;
+      
+      try {
+        const responseText = await response.text();
         
-        // Track locally that this user has liked
-        if (!db.likes) {
-          db.likes = {
-            totalLikes: 0,
-            likedVisitors: {},
-            likeHistory: [],
-          };
+        try {
+          errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || errorData.msg || responseText;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
         }
-        db.likes.likedVisitors[visitorId] = true;
-        db.likes.likeHistory = db.likes.likeHistory || [];
-        db.likes.likeHistory.push({
-          visitorId,
-          timestamp: new Date().toISOString(),
-        });
-        db.metadata = db.metadata || {};
-        db.metadata.lastUpdated = new Date().toISOString();
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
-
-        // Get updated total
-        const totalLikes = await getLikeCount();
-
-        return {
-          success: true,
-          message: 'Thank you for your like!',
-          totalLikes: totalLikes,
-        };
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `API returned ${response.status}`);
+      } catch (e) {
+        // Could not parse error response
       }
-    } catch (apiError) {
-      console.error('Error incrementing counter via API:', apiError);
-      throw apiError;
+      
+      // If backend says already liked, update sessionStorage
+      if (response.status === 400 || response.status === 409 || 
+          errorMessage.includes('already') || errorMessage.includes('duplicate')) {
+        const likeSessionKey = `has_liked_${visitorId}`;
+        sessionStorage.setItem(likeSessionKey, 'true');
+      }
+      
+      throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error('Error adding like:', error);
+    // If error says already liked, mark in sessionStorage
+    if (error.message.includes('already') || error.message.includes('409') || 
+        error.message.includes('duplicate')) {
+      const visitorId = getVisitorId();
+      const likeSessionKey = `has_liked_${visitorId}`;
+      sessionStorage.setItem(likeSessionKey, 'true');
+    }
+    
     // Try to get current total even on error
     try {
       const currentTotal = await getLikeCount();
       return {
         success: false,
-        message: 'Error adding like. Please try again.',
+        message: (error.message.includes('already') || error.message.includes('duplicate'))
+          ? 'You have already liked this portfolio' 
+          : `Error adding like: ${error.message}`,
         totalLikes: currentTotal,
       };
     } catch (e) {
       return {
         success: false,
-        message: 'Error adding like. Please try again.',
+        message: `Error adding like: ${error.message}`,
         totalLikes: 0,
       };
     }
@@ -584,14 +763,26 @@ export const addLike = async () => {
 };
 
 /**
- * Export database as JSON file (downloads local data)
+ * Export database as JSON file (downloads data from database)
  */
 export const exportDatabase = async () => {
   try {
-    const local = localStorage.getItem(LOCAL_STORAGE_KEY);
-    const db = local ? JSON.parse(local) : getDefaultDatabase();
+    // Fetch all data from database
+    const [counterResponse, visitorResponse] = await Promise.all([
+      makeApiRequest('/counter', { method: 'GET' }),
+      makeApiRequest('/visitor', { method: 'GET' }),
+    ]);
+
+    const counters = counterResponse.ok ? await counterResponse.json() : [];
+    const visitors = visitorResponse.ok ? await visitorResponse.json() : [];
+
+    const exportData = {
+      counters: Array.isArray(counters) ? counters : [],
+      visitors: Array.isArray(visitors) ? visitors : [],
+      exportedAt: new Date().toISOString(),
+    };
     
-    const dataStr = JSON.stringify(db, null, 2);
+    const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -602,8 +793,7 @@ export const exportDatabase = async () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Error exporting database:', error);
-    alert('Error exporting database.');
+    alert('Error exporting database from server.');
   }
 };
 
@@ -611,6 +801,6 @@ export const exportDatabase = async () => {
  * Check if counter API is configured
  */
 export const isCounterDevConfigured = () => {
-  return !!COUNTER_API_KEY && COUNTER_API_KEY !== '';
+  return !!API_BASE_URL && API_BASE_URL !== '';
 };
 

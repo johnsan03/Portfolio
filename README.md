@@ -14,6 +14,7 @@ A modern, professional portfolio website built with React, featuring interactive
 - 🎭 **3D Background** - Dynamic particle system with interactive 3D shapes (full-page effect)
 - 🖼️ **Theme-Based Images** - Profile images that change based on theme with smooth transitions
 - 📜 **Single Page Scroll** - Continuous scrolling without internal scroll containers
+- 📊 **Visitor Tracking** - Backend-powered visitor and likes counter with unique visitor tracking
 
 ### Sections Included
 - **Hero Section** - Introduction with animated profile image and social links
@@ -24,6 +25,7 @@ A modern, professional portfolio website built with React, featuring interactive
 - **Developer Challenges** - Interactive games (Typing, Memory Match, Bug Hunter)
 - **Projects Section** - Featured projects with links and descriptions
 - **Contact Section** - Contact information and social media links
+- **Visit Counter** - Visitor statistics and likes counter
 - **Footer** - Additional links and copyright
 
 ## 🎮 Interactive Games
@@ -48,95 +50,53 @@ The portfolio includes three engaging games that showcase creativity:
    - Score and missed count tracking
    - Increasing difficulty
 
-## 🗄️ Visitor Tracking & Likes Setup
+## 🗄️ Visitor Tracking & Likes
 
-The portfolio uses **Counter.dev** for secure visitor tracking and **localStorage** for likes. This approach is perfect for GitHub Pages - no backend server or API keys needed!
+The portfolio uses a **Xano backend** for visitor tracking and likes management. All data is stored securely in the backend database.
 
 ### How It Works
 
-- **Visitor Tracking**: Uses [Counter.dev](https://counter.dev) - a free, privacy-friendly visitor counter
-  - Tracks unique visitors automatically via a lightweight script
-  - No API keys or authentication required
-  - Data stored securely on Counter.dev servers
-  - View stats at https://counter.dev
+- **Visitor Tracking**: Tracks unique visitors and total visits
+  - Each visitor gets a unique ID stored in browser localStorage
+  - Visit data is stored in the backend database
+  - Tracks last visit timestamp for each visitor
 
-- **Likes**: Stored in browser localStorage (client-side only)
-  - Each unique visitor can like once
-  - No server writes needed - completely secure
-  - Works offline
+- **Likes System**: Backend-managed likes with one like per visitor
+  - Each unique visitor can like only once
+  - Like status is checked against the backend database
+  - Total likes are displayed from the database
 
 ### Setup Instructions
 
-1. **Get Your Counter.dev Username**:
-   - Use your GitHub username (e.g., `johnsan`) or any unique ID
-   - For multiple pages/repos, use format: `username/repo-name` (e.g., `johnsan/portfolio`)
-
-2. **Update the Counter.dev Script in `index.html`**:
-   
-   Open `index.html` and find this line near the bottom:
-   ```html
-   <script src="https://counter.dev/track.js?username=YOUR_USERNAME&st=1"></script>
-   ```
-   
-   Replace `YOUR_USERNAME` with your counter.dev username:
-   ```html
-   <script src="https://counter.dev/track.js?username=johnsan&st=1"></script>
-   ```
-
-3. **Configure Environment Variable** (Optional - for API stats):
+1. **Configure Environment Variable**:
    
    Create or update `.env` file in the project root:
    ```env
-   VITE_COUNTER_DEV_USERNAME=your-username
+   VITE_API_KEY=your-api-key-here
    ```
    
-   Replace `your-username` with your counter.dev username (same as in index.html)
+   Replace `your-api-key-here` with your Xano API key (if required by your backend)
+
+2. **Backend Configuration**:
+   
+   The backend API base URL is configured in `src/utils/counterDB.js`:
+   ```javascript
+   const API_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:WpZv-jLF';
+   ```
+   
+   Update this if your backend URL changes.
+
+3. **Backend Endpoints Required**:
+   - `GET /counter` - Get all counter records
+   - `POST /counter` - Add a new like
+   - `GET /visitor` - Get all visitor records
+   - `POST /visitor` - Record a new visit
+   - `GET /visitor/{visitor_id}` - Get visitor by ID
 
 4. **That's It!** 🎉
-   - Counter.dev script automatically tracks visits
-   - No API keys, tokens, or authentication needed
-   - Starts counting immediately when deployed
-
-### View Your Stats
-
-- Visit https://counter.dev
-- Enter your username to see your dashboard
-- View total visits, unique visitors, and trends
-- Similar to GitHub's Traffic insights
-
-### Features
-
-- ✅ **Free & Privacy-Friendly**: No personal data collected
-- ✅ **GDPR Compliant**: No cookies, anonymized IPs
-- ✅ **Lightweight**: Script is under 1KB
-- ✅ **Reliable**: Works even if Counter.dev is temporarily down (caches)
-- ✅ **Multiple Pages**: Use different IDs for different pages/repos
-
-### Likes System
-
-- Likes are stored in browser localStorage
-- Each visitor can like only once (tracked by unique visitor ID)
-- No server writes - completely secure
-- Works offline
-
-### GitHub Pages Deployment
-
-1. **Build your project**:
-   ```bash
-   npm run build
-   ```
-
-2. **Deploy to GitHub Pages**:
-   - Go to your repository Settings → Pages
-   - Select source: Deploy from a branch
-   - Branch: `gh-pages` (or `main` if using `/` as root)
-   - Folder: `/dist`
-   - Click Save
-
-3. **Verify Counter.dev Script**:
-   - After deployment, check your site's HTML source
-   - Make sure the counter.dev script is present with your username
-   - Visit your site - it will start tracking immediately!
+   - Visitor tracking starts automatically on page load
+   - Likes are managed through the backend API
+   - All data persists in the database
 
 ## 🚀 Getting Started
 
@@ -158,8 +118,8 @@ cd Portfolio
 npm install
 ```
 
-3. **Configure GitHub API** (see Database Setup section above):
-   - Create a `.env` file with your GitHub token and repo name
+3. **Configure Backend API** (see Visitor Tracking & Likes section above):
+   - Create a `.env` file with your API key (if required)
 
 4. **Start the Frontend**:
    ```bash
@@ -168,7 +128,7 @@ npm install
 
 5. Open your browser and navigate to `http://localhost:5173`
 
-**Note**: The visit counter and likes will work with GitHub API. If not configured, it will use localStorage as a fallback.
+**Note**: The visit counter and likes require a working backend connection. Make sure your backend API is accessible and properly configured.
 
 ### Build for Production
 
@@ -277,6 +237,7 @@ The 3D background animation is in `src/components/Background3D.jsx`. This is the
 - **React Icons** - Icon library (Font Awesome)
 - **CSS3** - Advanced styling with CSS variables and animations
 - **Canvas API** - For 3D background animations
+- **Xano Backend** - RESTful API for visitor tracking and likes management
 
 ## 📁 Project Structure
 
@@ -293,9 +254,12 @@ src/
 │   ├── Projects.jsx       # Projects section
 │   ├── Contact.jsx        # Contact section
 │   ├── Footer.jsx         # Footer
+│   ├── VisitCounter.jsx   # Visitor tracking and likes component
 │   └── Background3D.jsx   # 3D background animation
 ├── context/
 │   └── ThemeContext.jsx    # Theme context provider
+├── utils/
+│   └── counterDB.js        # Backend API utilities for visitor tracking and likes
 ├── assets/
 │   ├── Light.png          # Light mode profile image
 │   ├── Dark.png           # Dark mode profile image
@@ -356,6 +320,8 @@ src/
 - The portfolio is optimized for GitHub Pages deployment
 - **3D effects are only on the background** - Individual components use simple 2D transforms for better performance
 - All sections have overflow protection to prevent scroll issues
+- Visitor tracking and likes require a working backend API connection
+- API requests are cached and rate-limited to prevent excessive calls
 
 ## 🔧 Development
 
