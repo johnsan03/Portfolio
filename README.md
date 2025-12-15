@@ -201,12 +201,108 @@ npm run preview
 
 ### Deploy to GitHub Pages
 
-1. Build the project:
-```bash
-npm run build
-```
+#### Manual Deployment (Using Command Line)
 
-2. Deploy using GitHub Pages or your preferred hosting service.
+If you're deploying manually using `npm run deploy` (without GitHub Actions workflow):
+
+1. **Create `.env` file locally** (this file is already in `.gitignore` - **NEVER commit it!**):
+   ```env
+   VITE_API_KEY=your-xano-api-key-here
+   VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key-here
+   ```
+
+2. **Build the project** (environment variables are embedded at build time):
+   ```bash
+   npm run build
+   ```
+   - Vite reads your `.env` file during build
+   - Environment variables (`VITE_*`) are embedded into the built JavaScript files
+   - The built files in `dist/` will contain your API keys (this is normal for static sites)
+
+3. **Deploy to GitHub Pages**:
+   ```bash
+   npm run deploy
+   ```
+   - This runs `gh-pages -d dist` which deploys the `dist` folder to the `gh-pages` branch
+   - Your site will be live at `https://yourusername.github.io/Portfolio`
+
+**Important Security Notes**:
+- ✅ **DO**: Use `.env` file locally (it's gitignored, so it won't be committed to Git)
+- ❌ **DON'T**: Put secrets in JSON files or any files that get committed to Git
+- ⚠️ **Warning**: The built files in `dist/` will contain your API keys in plain text
+  - Anyone can view your API keys in the browser's source code
+  - Make sure your backend has proper rate limiting and security measures
+  - Consider using API keys with limited permissions
+
+**Why This Works**:
+- Vite embeds `VITE_*` environment variables at **build time** (not runtime)
+- When you build locally with `.env`, those values get baked into the JavaScript files
+- The built files are what gets deployed, so the keys are included
+- This is the standard approach for static site deployments
+
+**Alternative (More Secure)**: Use GitHub Actions with secrets (see workflow example above) to keep secrets out of your repository entirely.
+
+#### Troubleshooting Deployment Issues
+
+If your deployed site is not working, check the following:
+
+1. **Verify `.env` file exists and has values**:
+   ```bash
+   # Check if .env file exists
+   ls -la .env
+   
+   # View contents (make sure values are set)
+   cat .env
+   ```
+   
+   Your `.env` should contain:
+   ```env
+   VITE_API_KEY=your-actual-api-key
+   VITE_RECAPTCHA_SITE_KEY=your-actual-site-key
+   ```
+
+2. **Verify environment variables are in the build**:
+   ```bash
+   # Build the project
+   npm run build
+   
+   # Check if variables are embedded (search for your API key in built files)
+   grep -r "VITE_API_KEY" dist/ || echo "Variables not found - check .env file"
+   ```
+   
+   **Note**: The actual values (not the variable names) should be in the built files.
+
+3. **Check browser console for errors**:
+   - Open your deployed site
+   - Press F12 to open Developer Tools
+   - Check the Console tab for errors
+   - Check the Network tab to see if API calls are failing
+
+4. **Common Issues**:
+   - **API calls failing**: Check if `VITE_API_KEY` is set in `.env` and rebuild
+   - **reCAPTCHA not showing**: Check if `VITE_RECAPTCHA_SITE_KEY` is set in `.env`
+   - **404 errors**: Verify `base: "/Portfolio/"` in `vite.config.js` matches your repository name
+   - **CORS errors**: Make sure your Xano backend allows requests from your GitHub Pages domain
+
+5. **Rebuild and redeploy**:
+   ```bash
+   # Make sure .env file exists with correct values
+   # Then rebuild
+   npm run build
+   
+   # Verify the build
+   npm run preview
+   # Test locally at http://localhost:4173
+   
+   # If everything works, deploy
+   npm run deploy
+   ```
+
+6. **Verify deployment**:
+   - Check GitHub repository → Settings → Pages
+   - Verify the source is set to `gh-pages` branch
+   - Visit your site: `https://yourusername.github.io/Portfolio`
+   - Open browser console (F12) to check for errors
 
 ## 🎨 Customization
 
