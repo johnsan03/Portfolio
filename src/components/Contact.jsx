@@ -126,11 +126,6 @@ const Contact = () => {
     };
 
     try {
-      // Initialize EmailJS if credentials are available
-      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_USER_ID) {
-        emailjs.init(EMAILJS_USER_ID);
-      }
-
       // Submit to both Xano (database) and EmailJS (email notification) in parallel
       const promises = [];
 
@@ -150,21 +145,49 @@ const Contact = () => {
 
       // 2. Send email via EmailJS (if configured)
       let emailjsPromise = null;
-      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_USER_ID) {
+      const isEmailJSConfigured = EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_USER_ID;
+      
+      if (isEmailJSConfigured) {
+        // Initialize EmailJS with Public Key (User ID)
+        emailjs.init(EMAILJS_USER_ID);
+        
+        // Prepare EmailJS template parameters
+        // These variable names should match your EmailJS template
         const emailjsTemplateParams = {
           from_name: formData.name.trim(),
           from_email: formData.email.trim().toLowerCase(),
           message: formData.message.trim(),
           to_name: 'Marshal Johnsan', // Your name
+          reply_to: formData.email.trim().toLowerCase(), // For reply functionality
+          user_name: formData.name.trim(), // Alternative variable name
+          user_email: formData.email.trim().toLowerCase(), // Alternative variable name
         };
 
+        // Send email via EmailJS API
+        // Note: After init(), user ID is not needed in send()
         emailjsPromise = emailjs.send(
           EMAILJS_SERVICE_ID,
           EMAILJS_TEMPLATE_ID,
-          emailjsTemplateParams,
-          EMAILJS_USER_ID
-        );
+          emailjsTemplateParams
+        ).then((response) => {
+          console.log('EmailJS Success:', response.status, response.text);
+          return response;
+        }).catch((error) => {
+          // Log EmailJS errors for debugging
+          console.error('EmailJS Error:', error);
+          throw error;
+        });
+        
         promises.push(emailjsPromise);
+      } else {
+        // Log if EmailJS is not configured (only in development)
+        if (import.meta.env.DEV) {
+          console.warn('EmailJS not configured. Missing environment variables:', {
+            hasServiceId: !!EMAILJS_SERVICE_ID,
+            hasTemplateId: !!EMAILJS_TEMPLATE_ID,
+            hasUserId: !!EMAILJS_USER_ID
+          });
+        }
       }
 
       // Wait for all promises to complete
@@ -183,17 +206,27 @@ const Contact = () => {
 
       // Check EmailJS response (if it was sent)
       let emailjsSuccess = true; // Default to true if EmailJS is not configured
+      let emailjsError = null;
       if (emailjsPromise) {
         const emailjsResult = results[1];
         emailjsSuccess = emailjsResult.status === 'fulfilled';
+        if (!emailjsSuccess) {
+          emailjsError = emailjsResult.reason;
+          console.error('EmailJS failed:', emailjsError);
+        }
       }
 
       // Determine overall success and message
       if (xanoSuccess) {
         // Xano succeeded - form is saved
-        const emailStatus = emailjsPromise 
-          ? (emailjsSuccess ? ' Email sent successfully!' : ' (Email notification failed, but your message was saved)')
-          : '';
+        let emailStatus = '';
+        if (isEmailJSConfigured) {
+          if (emailjsSuccess) {
+            emailStatus = ' Email notification sent successfully!';
+          } else {
+            emailStatus = ' (Email notification failed, but your message was saved to database)';
+          }
+        }
         
         setSubmitStatus({
           type: 'success',
