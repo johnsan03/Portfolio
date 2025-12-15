@@ -1,16 +1,13 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import emailjs from '@emailjs/browser';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub } from 'react-icons/fa';
-
-// EmailJS Configuration
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 
 // Xano Backend Configuration
 const API_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:WpZv-jLF';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
+
+// Google reCAPTCHA Configuration
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -37,87 +34,70 @@ const Contact = () => {
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: '' });
 
-    // Prepare form data
-    const submissionData = {
+    // Get reCAPTCHA token
+    let recaptchaToken = null;
+    if (window.grecaptcha && RECAPTCHA_SITE_KEY) {
+      try {
+        recaptchaToken = window.grecaptcha.getResponse();
+        if (!recaptchaToken) {
+          setSubmitStatus({
+            type: 'error',
+            message: 'Please complete the reCAPTCHA verification.',
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error) {
+        setSubmitStatus({
+          type: 'error',
+          message: 'reCAPTCHA verification failed. Please refresh and try again.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Prepare form submission data (matching Xano query structure exactly)
+    // The query expects: name (trim), email (trim|lower), message (trim), recaptcha_token
+    const formSubmissionData = {
       name: formData.name.trim(),
-      email: formData.email.trim(),
+      email: formData.email.trim().toLowerCase(),
       message: formData.message.trim(),
+      ...(recaptchaToken && { recaptcha_token: recaptchaToken }),
     };
 
     try {
-      // Initialize EmailJS with public key
-      emailjs.init(EMAILJS_PUBLIC_KEY);
+      // Submit form to database (matching Xano query: submit_form)
+      const response = await fetch(`${API_BASE_URL}/submit_form`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` }),
+        },
+        mode: 'cors',
+        credentials: 'omit',
+        body: JSON.stringify(formSubmissionData),
+      });
 
-      // Prepare EmailJS template parameters
-      const templateParams = {
-        user_name: submissionData.name,
-        from_name: submissionData.name,
-        user_email: submissionData.email,
-        from_email: submissionData.email,
-        message: submissionData.message,
-        reply_to: submissionData.email,
-        to_name: 'Marshal Johnsan',
-      };
-
-      // Execute both operations in parallel
-      const [emailResult, dbResult] = await Promise.allSettled([
-        // Send email via EmailJS
-        EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY
-          ? emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-          : Promise.reject(new Error('EmailJS not configured')),
-        
-        // Save to database via Xano API
-        fetch(`${API_BASE_URL}/form_submission`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            ...(API_KEY && { 'Authorization': `Bearer ${API_KEY}` }),
-          },
-          mode: 'cors',
-          credentials: 'omit',
-          body: JSON.stringify(submissionData),
-        }),
-      ]);
-
-      // Check results
-      const emailSuccess = emailResult.status === 'fulfilled' && emailResult.value?.status === 200;
-      const dbSuccess = dbResult.status === 'fulfilled' && dbResult.value?.ok;
-
-      // Determine success/error messages
-      if (emailSuccess && dbSuccess) {
-        // Both succeeded
+      if (response.ok) {
         setSubmitStatus({
           type: 'success',
           message: 'Thank you for your message! I will get back to you soon.',
         });
         setFormData({ name: '', email: '', message: '' });
-      } else if (emailSuccess || dbSuccess) {
-        // At least one succeeded
-        const failedService = emailSuccess ? 'database' : 'email';
-        setSubmitStatus({
-          type: 'success',
-          message: `Message sent successfully! (Note: ${failedService} service had an issue, but your message was received)`,
-        });
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        // Both failed
-        let errorMessage = 'Failed to send message. Please try again later.';
         
-        if (emailResult.status === 'rejected') {
-          const emailError = emailResult.reason;
-          if (emailError?.text) {
-            errorMessage = `Email error: ${emailError.text}`;
-          } else if (emailError?.message) {
-            errorMessage = `Email error: ${emailError.message}`;
+        // Reset reCAPTCHA after successful submission
+        if (window.grecaptcha && RECAPTCHA_SITE_KEY) {
+          try {
+            window.grecaptcha.reset();
+          } catch (error) {
+            // Ignore reset errors
           }
-        } else if (dbResult.status === 'rejected') {
-          errorMessage = `Database error: ${dbResult.reason?.message || 'Failed to save to database'}`;
-        } else if (dbResult.status === 'fulfilled' && !dbResult.value?.ok) {
-          const dbError = await dbResult.value.json().catch(() => ({}));
-          errorMessage = `Database error: ${dbError.message || `Status ${dbResult.value.status}`}`;
         }
-
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || `Failed to save message. Status: ${response.status}`;
         setSubmitStatus({
           type: 'error',
           message: errorMessage,
@@ -269,6 +249,20 @@ const Contact = () => {
                 required
               />
             </motion.div>
+            {RECAPTCHA_SITE_KEY && (
+              <motion.div
+                className="form-group recaptcha-container"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+              >
+                <div
+                  className="g-recaptcha"
+                  data-sitekey={RECAPTCHA_SITE_KEY}
+                ></div>
+              </motion.div>
+            )}
             {submitStatus.type && (
               <motion.div
                 className={`form-status ${submitStatus.type}`}

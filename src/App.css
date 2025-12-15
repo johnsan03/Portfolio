@@ -2113,6 +2113,23 @@ section#skills {
   min-height: 120px;
 }
 
+.recaptcha-container {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.recaptcha-container .g-recaptcha {
+  transform: scale(0.9);
+  transform-origin: 0 0;
+}
+
+@media (max-width: 768px) {
+  .recaptcha-container .g-recaptcha {
+    transform: scale(0.85);
+  }
+}
+
 .form-status {
   padding: 1rem 1.25rem;
   border-radius: 12px;
