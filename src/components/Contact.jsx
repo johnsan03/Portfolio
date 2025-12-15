@@ -111,22 +111,17 @@ const Contact = () => {
 
     // Prepare form submission data (matching Xano query structure exactly)
     // The query expects: name (trim), email (trim|lower), message (trim), recaptcha_token
-    // Try both formats - direct fields and wrapped in form_submission variable
-    const formDataDirect = {
+    // Send fields directly as JSON (not wrapped) - Xano input section expects direct fields
+    const formSubmissionData = {
       name: formData.name.trim(),
       email: formData.email.trim().toLowerCase(),
       message: formData.message.trim(),
       ...(recaptchaToken && { recaptcha_token: recaptchaToken }),
     };
 
-    // Also try wrapped format in case Xano expects it
-    const formSubmissionData = {
-      form_submission: formDataDirect
-    };
-
     try {
       // Submit form to database (matching Xano query: submit_form)
-      // Try direct format first, if it fails, the error will indicate the issue
+      // Xano input section expects fields directly in JSON body
       const response = await fetch(`${API_BASE_URL}/submit_form`, {
         method: 'POST',
         headers: {
