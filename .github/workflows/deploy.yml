@@ -34,6 +34,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Verify environment variables
+        run: |
+          if [ -z "$RECAPTCHA_KEY" ]; then
+            echo "⚠️  WARNING: VITE_RECAPTCHA_SITE_KEY is not set in GitHub Secrets"
+            echo "reCAPTCHA will not appear on the deployed site"
+          else
+            echo "✅ VITE_RECAPTCHA_SITE_KEY is set"
+          fi
+          if [ -z "$API_KEY" ]; then
+            echo "⚠️  WARNING: VITE_API_KEY is not set in GitHub Secrets"
+          else
+            echo "✅ VITE_API_KEY is set"
+          fi
+        env:
+          RECAPTCHA_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+          API_KEY: ${{ secrets.VITE_API_KEY }}
+      
       - name: Build project
         env:
           VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
