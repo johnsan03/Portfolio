@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub } from 'react-icons/fa';
 
 // Xano Backend Configuration
 const API_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:WpZv-jLF';
 const API_KEY = import.meta.env.VITE_API_KEY || '';
 
-// Google reCAPTCHA Configuration
+// Google reCAPTCHA v3 Configuration
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 
 const Contact = () => {
@@ -18,50 +18,53 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ type: null, message: '' });
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
-  const recaptchaRef = useRef(null);
-  const recaptchaWidgetId = useRef(null);
 
-  // Load and render reCAPTCHA when component mounts
+  // Load reCAPTCHA v3 script when component mounts
   useEffect(() => {
     if (!RECAPTCHA_SITE_KEY) return;
 
-    // Check if reCAPTCHA is already loaded
-    const checkRecaptcha = () => {
-      if (window.grecaptcha && window.grecaptcha.render) {
-        setRecaptchaLoaded(true);
-        // Render reCAPTCHA widget
-        if (recaptchaRef.current && !recaptchaWidgetId.current) {
-          try {
-            recaptchaWidgetId.current = window.grecaptcha.render(recaptchaRef.current, {
-              sitekey: RECAPTCHA_SITE_KEY,
-            });
-          } catch (error) {
-            // Widget might already be rendered
-          }
-        }
-      } else {
-        // Wait a bit and check again
-        setTimeout(checkRecaptcha, 100);
-      }
-    };
-
-    // Start checking after a short delay
-    const timer = setTimeout(checkRecaptcha, 500);
-    
-    // Also check immediately if already loaded
-    if (window.grecaptcha) {
-      checkRecaptcha();
+    // Check if script is already loaded
+    if (window.grecaptcha && window.grecaptcha.ready) {
+      setRecaptchaLoaded(true);
+      return;
     }
 
-    return () => {
-      clearTimeout(timer);
-      // Reset reCAPTCHA widget on unmount
-      if (recaptchaWidgetId.current && window.grecaptcha && window.grecaptcha.reset) {
-        try {
-          window.grecaptcha.reset(recaptchaWidgetId.current);
-        } catch (error) {
-          // Ignore errors
+    // Check if script tag already exists
+    const existingScript = document.querySelector('script[src*="recaptcha/api.js"]');
+    if (existingScript) {
+      // Script exists, wait for it to load
+      const checkLoaded = () => {
+        if (window.grecaptcha && window.grecaptcha.ready) {
+          setRecaptchaLoaded(true);
+        } else {
+          setTimeout(checkLoaded, 100);
         }
+      };
+      checkLoaded();
+      return;
+    }
+
+    // Load reCAPTCHA v3 script dynamically
+    const script = document.createElement('script');
+    script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.grecaptcha && window.grecaptcha.ready) {
+        window.grecaptcha.ready(() => {
+          setRecaptchaLoaded(true);
+        });
+      } else {
+        setRecaptchaLoaded(true);
+      }
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup: remove script if component unmounts
+      const scriptToRemove = document.querySelector(`script[src*="recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}"]`);
+      if (scriptToRemove) {
+        scriptToRemove.remove();
       }
     };
   }, [RECAPTCHA_SITE_KEY]);
@@ -82,15 +85,16 @@ const Contact = () => {
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: '' });
 
-    // Get reCAPTCHA token
+    // Get reCAPTCHA v3 token
     let recaptchaToken = null;
-    if (window.grecaptcha && RECAPTCHA_SITE_KEY && recaptchaWidgetId.current !== null) {
+    if (window.grecaptcha && RECAPTCHA_SITE_KEY && recaptchaLoaded) {
       try {
-        recaptchaToken = window.grecaptcha.getResponse(recaptchaWidgetId.current);
+        // reCAPTCHA v3: execute on form submit
+        recaptchaToken = await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit' });
         if (!recaptchaToken) {
           setSubmitStatus({
             type: 'error',
-            message: 'Please complete the reCAPTCHA verification.',
+            message: 'reCAPTCHA verification failed. Please try again.',
           });
           setIsSubmitting(false);
           return;
@@ -134,15 +138,6 @@ const Contact = () => {
           message: 'Thank you for your message! I will get back to you soon.',
         });
         setFormData({ name: '', email: '', message: '' });
-        
-        // Reset reCAPTCHA after successful submission
-        if (window.grecaptcha && RECAPTCHA_SITE_KEY && recaptchaWidgetId.current !== null) {
-          try {
-            window.grecaptcha.reset(recaptchaWidgetId.current);
-          } catch (error) {
-            // Ignore reset errors
-          }
-        }
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || errorData.error || `Failed to save message. Status: ${response.status}`;
@@ -297,22 +292,6 @@ const Contact = () => {
                 required
               />
             </motion.div>
-            {RECAPTCHA_SITE_KEY && (
-              <motion.div
-                className="form-group recaptcha-container"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.5 }}
-              >
-                <div ref={recaptchaRef} id="recaptcha-widget"></div>
-                {!recaptchaLoaded && (
-                  <div style={{ color: '#666', fontSize: '14px', marginTop: '10px' }}>
-                    Loading reCAPTCHA...
-                  </div>
-                )}
-              </motion.div>
-            )}
             {submitStatus.type && (
               <motion.div
                 className={`form-status ${submitStatus.type}`}
