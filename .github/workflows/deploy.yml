@@ -33,6 +33,69 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+      
+      - name: Verify environment variables
+        run: |
+          echo "🔍 Checking environment variables from GitHub Secrets..."
+          echo ""
+          echo "Xano API Key:"
+          if [ -z "$API_KEY" ]; then
+            echo "  ❌ VITE_API_KEY is NOT set"
+          else
+            echo "  ✅ VITE_API_KEY is set"
+            echo "  Length: ${#API_KEY} characters"
+          fi
+          echo ""
+          echo "reCAPTCHA Site Key:"
+          if [ -z "$RECAPTCHA_KEY" ]; then
+            echo "  ❌ VITE_RECAPTCHA_SITE_KEY is NOT set"
+          else
+            echo "  ✅ VITE_RECAPTCHA_SITE_KEY is set"
+            echo "  Length: ${#RECAPTCHA_KEY} characters"
+          fi
+          echo ""
+          echo "EmailJS Service ID:"
+          if [ -z "$EMAILJS_SERVICE" ]; then
+            echo "  ❌ VITE_EMAILJS_SERVICE_ID is NOT set"
+          else
+            echo "  ✅ VITE_EMAILJS_SERVICE_ID is set"
+            echo "  Length: ${#EMAILJS_SERVICE} characters"
+          fi
+          echo ""
+          echo "EmailJS Template ID:"
+          if [ -z "$EMAILJS_TEMPLATE" ]; then
+            echo "  ❌ VITE_EMAILJS_TEMPLATE_ID is NOT set"
+          else
+            echo "  ✅ VITE_EMAILJS_TEMPLATE_ID is set"
+            echo "  Length: ${#EMAILJS_TEMPLATE} characters"
+          fi
+          echo ""
+          echo "EmailJS User ID:"
+          if [ -z "$EMAILJS_USER" ]; then
+            echo "  ❌ VITE_EMAILJS_USER_ID is NOT set"
+          else
+            echo "  ✅ VITE_EMAILJS_USER_ID is set"
+            echo "  Length: ${#EMAILJS_USER} characters"
+          fi
+          echo ""
+          echo "📊 Summary:"
+          EMAILJS_CONFIGURED=true
+          [ -z "$EMAILJS_SERVICE" ] && EMAILJS_CONFIGURED=false
+          [ -z "$EMAILJS_TEMPLATE" ] && EMAILJS_CONFIGURED=false
+          [ -z "$EMAILJS_USER" ] && EMAILJS_CONFIGURED=false
+          if [ "$EMAILJS_CONFIGURED" = true ]; then
+            echo "  ✅ EmailJS is fully configured"
+          else
+            echo "  ⚠️  EmailJS is NOT fully configured (some variables missing)"
+          fi
+          echo ""
+          echo "Note: Secret values are masked by GitHub Actions for security."
+        env:
+          API_KEY: ${{ secrets.VITE_API_KEY }}
+          RECAPTCHA_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
+          EMAILJS_SERVICE: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
+          EMAILJS_TEMPLATE: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
+          EMAILJS_USER: ${{ secrets.VITE_EMAILJS_USER_ID }}
  
       - name: Build project
         env:
