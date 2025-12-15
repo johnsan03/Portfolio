@@ -68,14 +68,18 @@ The portfolio uses a **Xano backend** for visitor tracking and likes management.
 
 ### Setup Instructions
 
-1. **Configure Environment Variable**:
+1. **Configure Environment Variables**:
    
    Create or update `.env` file in the project root:
    ```env
-   VITE_API_KEY=your-api-key-here
+   VITE_API_KEY=your-xano-api-key-here
+   VITE_EMAILJS_SERVICE_ID=your-emailjs-service-id
+   VITE_EMAILJS_TEMPLATE_ID=your-emailjs-template-id
+   VITE_EMAILJS_PUBLIC_KEY=your-emailjs-public-key
    ```
    
-   Replace `your-api-key-here` with your Xano API key (if required by your backend)
+   - Replace `your-xano-api-key-here` with your Xano API key (if required by your backend)
+   - Replace EmailJS values with your EmailJS credentials (see EmailJS Setup below)
 
 2. **Backend Configuration**:
    
@@ -93,10 +97,99 @@ The portfolio uses a **Xano backend** for visitor tracking and likes management.
    - `POST /visitor` - Record a new visit
    - `GET /visitor/{visitor_id}` - Get visitor by ID
 
-4. **That's It!** 🎉
+4. **EmailJS Setup** (for Contact Form):
+   
+   See the "Contact Form with EmailJS" section below for detailed setup instructions.
+
+5. **That's It!** 🎉
    - Visitor tracking starts automatically on page load
    - Likes are managed through the backend API
+   - Contact form sends emails via EmailJS
    - All data persists in the database
+
+### Contact Form with EmailJS and Database Storage
+
+The contact form uses **EmailJS** to send emails directly to your inbox AND saves submissions to your **Xano database** simultaneously:
+
+#### EmailJS Setup Instructions:
+
+1. **Create an EmailJS Account**:
+   - Visit [https://www.emailjs.com/](https://www.emailjs.com/)
+   - Sign up for a free account (free tier includes 200 emails/month)
+
+2. **Add Email Service**:
+   - Go to **Email Services** in the dashboard
+   - Click **Add New Service**
+   - Choose your email provider (Gmail, Outlook, etc.)
+   - Follow the setup instructions to connect your email account
+   - **Copy the Service ID** (you'll need this for `.env`)
+
+3. **Create Email Template**:
+   - Go to **Email Templates** in the dashboard
+   - Click **Create New Template**
+   - **Important**: Make sure to use the exact variable names in your template
+   - Use the following template structure:
+     ```
+     Subject: New Contact Form Message from {{from_name}}
+     
+     From: {{from_name}}
+     Email: {{from_email}}
+     
+     Message:
+     {{message}}
+     
+     ---
+     Reply to: {{reply_to}}
+     ```
+   - **Template Variables Available**:
+     - `{{from_name}}` - Sender's name
+     - `{{from_email}}` - Sender's email
+     - `{{user_name}}` - Alternative name variable
+     - `{{user_email}}` - Alternative email variable
+     - `{{message}}` - Message content
+     - `{{reply_to}}` - Reply-to email
+     - `{{to_name}}` - Your name
+   - **Copy the Template ID** (you'll need this for `.env`)
+   - **Test the template** by sending a test email to ensure all variables work
+
+4. **Get Public Key**:
+   - Go to **Account** → **General** in the dashboard
+   - Find **Public Key** under API Keys
+   - **Copy the Public Key** (you'll need this for `.env`)
+
+5. **Add to Environment Variables**:
+   ```env
+   VITE_EMAILJS_SERVICE_ID=your-service-id
+   VITE_EMAILJS_TEMPLATE_ID=your-template-id
+   VITE_EMAILJS_PUBLIC_KEY=your-public-key
+   ```
+
+#### Features:
+- **Dual Submission**: Saves to database AND sends email simultaneously
+- **Direct Email Delivery**: Emails sent directly to your inbox via EmailJS
+- **Database Storage**: All submissions saved to Xano database for record keeping
+- **Parallel Processing**: Both operations run in parallel for better performance
+- **Graceful Error Handling**: If one service fails, the other still processes
+- **Free Tier**: 200 emails/month on the free EmailJS plan
+- **Easy Setup**: Simple configuration with environment variables
+
+#### How It Works:
+1. User submits the contact form
+2. Form data is sent to **both** services simultaneously:
+   - **EmailJS**: Sends email notification to your inbox
+   - **Xano API**: Saves submission to `/form_submission` endpoint
+3. Success message shown if at least one service succeeds
+4. Error message shown only if both services fail
+
+#### Template Variables:
+The form sends the following variables to your EmailJS template:
+- `from_name` / `user_name`: Sender's name (both provided for compatibility)
+- `from_email` / `user_email`: Sender's email address (both provided for compatibility)
+- `message`: Message content
+- `reply_to`: Reply-to email address
+- `to_name`: Your name (hardcoded in the component)
+
+**Note**: If only the message is appearing in your emails, check your EmailJS template configuration. Make sure you're using `{{from_name}}` and `{{from_email}}` in your template, not just `{{message}}`.
 
 ## 🚀 Getting Started
 
