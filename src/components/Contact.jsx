@@ -110,15 +110,13 @@ const Contact = () => {
     }
 
     // Prepare form submission data (matching Xano query structure exactly)
-    // The query expects: name (trim), email (trim|lower), message (trim), recaptcha_token
-    // Wrapped in form_submission variable as the error indicates this is required
+    // The query input expects: name (trim), email (trim|lower), message (trim), recaptcha_token
+    // Send fields directly as the Xano input section defines them as direct parameters
     const formSubmissionData = {
-      form_submission: {
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        message: formData.message.trim(),
-        ...(recaptchaToken && { recaptcha_token: recaptchaToken }),
-      }
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      message: formData.message.trim(),
+      ...(recaptchaToken && { recaptcha_token: recaptchaToken }),
     };
 
     try {
