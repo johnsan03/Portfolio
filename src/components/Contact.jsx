@@ -111,16 +111,22 @@ const Contact = () => {
 
     // Prepare form submission data (matching Xano query structure exactly)
     // The query expects: name (trim), email (trim|lower), message (trim), recaptcha_token
-    // Fields are sent directly, not wrapped - Xano query handles reCAPTCHA verification
-    const formSubmissionData = {
+    // Try both formats - direct fields and wrapped in form_submission variable
+    const formDataDirect = {
       name: formData.name.trim(),
       email: formData.email.trim().toLowerCase(),
       message: formData.message.trim(),
       ...(recaptchaToken && { recaptcha_token: recaptchaToken }),
     };
 
+    // Also try wrapped format in case Xano expects it
+    const formSubmissionData = {
+      form_submission: formDataDirect
+    };
+
     try {
       // Submit form to database (matching Xano query: submit_form)
+      // Try direct format first, if it fails, the error will indicate the issue
       const response = await fetch(`${API_BASE_URL}/submit_form`, {
         method: 'POST',
         headers: {
@@ -135,6 +141,15 @@ const Contact = () => {
 
       const responseData = await response.json().catch(() => ({}));
       
+      // Log full response for debugging (remove in production if needed)
+      if (!response.ok || !responseData.success) {
+        console.error('Xano API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: responseData
+        });
+      }
+      
       // Xano response structure: { success: true/false, message: "...", submission: {...} }
       if (response.ok && responseData.success) {
         setSubmitStatus({
@@ -144,7 +159,7 @@ const Contact = () => {
         setFormData({ name: '', email: '', message: '' });
       } else {
         // Handle reCAPTCHA validation failure or other errors
-        const errorMessage = responseData.message || responseData.error || `Failed to save message. Status: ${response.status}`;
+        const errorMessage = responseData.message || responseData.error || responseData.code || `Failed to save message. Status: ${response.status}`;
         setSubmitStatus({
           type: 'error',
           message: errorMessage,
