@@ -111,6 +111,7 @@ const Contact = () => {
 
     // Prepare form submission data (matching Xano query structure exactly)
     // The query expects: name (trim), email (trim|lower), message (trim), recaptcha_token
+    // Fields are sent directly, not wrapped - Xano query handles reCAPTCHA verification
     const formSubmissionData = {
       name: formData.name.trim(),
       email: formData.email.trim().toLowerCase(),
@@ -132,15 +133,18 @@ const Contact = () => {
         body: JSON.stringify(formSubmissionData),
       });
 
-      if (response.ok) {
+      const responseData = await response.json().catch(() => ({}));
+      
+      // Xano response structure: { success: true/false, message: "...", submission: {...} }
+      if (response.ok && responseData.success) {
         setSubmitStatus({
           type: 'success',
-          message: 'Thank you for your message! I will get back to you soon.',
+          message: responseData.message || 'Thank you for your message! I will get back to you soon.',
         });
         setFormData({ name: '', email: '', message: '' });
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || errorData.error || `Failed to save message. Status: ${response.status}`;
+        // Handle reCAPTCHA validation failure or other errors
+        const errorMessage = responseData.message || responseData.error || `Failed to save message. Status: ${response.status}`;
         setSubmitStatus({
           type: 'error',
           message: errorMessage,
