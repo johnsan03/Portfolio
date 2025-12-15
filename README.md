@@ -201,7 +201,36 @@ npm run preview
 
 ### Deploy to GitHub Pages
 
-#### Manual Deployment (Using Command Line)
+#### Option 1: Using GitHub Actions (Recommended)
+
+1. **Add GitHub Secrets**:
+   - Go to your repository → **Settings** → **Secrets and variables** → **Actions**
+   - Click **New repository secret** and add:
+     - `VITE_API_KEY` - Your Xano API key
+     - `VITE_RECAPTCHA_SITE_KEY` - Your Google reCAPTCHA Site Key (optional)
+
+2. **Enable GitHub Pages**:
+   - Go to **Settings** → **Pages**
+   - Set **Source** to **GitHub Actions**
+
+3. **Push to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Add GitHub Actions deployment"
+   git push origin main
+   ```
+
+4. **Automatic Deployment**:
+   - GitHub Actions will automatically build and deploy on every push to `main`
+   - Check the **Actions** tab to see deployment status
+   - Your site will be live at `https://yourusername.github.io/Portfolio`
+
+The workflow file (`.github/workflows/deploy.yml`) is already configured and will:
+- Build your project with environment variables from GitHub Secrets
+- Deploy to GitHub Pages automatically
+- Run on every push to `main` branch
+
+#### Option 2: Manual Deployment (Using Command Line)
 
 If you're deploying manually using `npm run deploy` (without GitHub Actions workflow):
 
