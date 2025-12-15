@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub } from 'react-icons/fa';
 
 // Xano Backend Configuration
@@ -17,6 +17,54 @@ const Contact = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ type: null, message: '' });
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
+  const recaptchaRef = useRef(null);
+  const recaptchaWidgetId = useRef(null);
+
+  // Load and render reCAPTCHA when component mounts
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return;
+
+    // Check if reCAPTCHA is already loaded
+    const checkRecaptcha = () => {
+      if (window.grecaptcha && window.grecaptcha.render) {
+        setRecaptchaLoaded(true);
+        // Render reCAPTCHA widget
+        if (recaptchaRef.current && !recaptchaWidgetId.current) {
+          try {
+            recaptchaWidgetId.current = window.grecaptcha.render(recaptchaRef.current, {
+              sitekey: RECAPTCHA_SITE_KEY,
+            });
+          } catch (error) {
+            // Widget might already be rendered
+          }
+        }
+      } else {
+        // Wait a bit and check again
+        setTimeout(checkRecaptcha, 100);
+      }
+    };
+
+    // Start checking after a short delay
+    const timer = setTimeout(checkRecaptcha, 500);
+    
+    // Also check immediately if already loaded
+    if (window.grecaptcha) {
+      checkRecaptcha();
+    }
+
+    return () => {
+      clearTimeout(timer);
+      // Reset reCAPTCHA widget on unmount
+      if (recaptchaWidgetId.current && window.grecaptcha && window.grecaptcha.reset) {
+        try {
+          window.grecaptcha.reset(recaptchaWidgetId.current);
+        } catch (error) {
+          // Ignore errors
+        }
+      }
+    };
+  }, [RECAPTCHA_SITE_KEY]);
 
   const handleChange = (e) => {
     setFormData({
@@ -36,9 +84,9 @@ const Contact = () => {
 
     // Get reCAPTCHA token
     let recaptchaToken = null;
-    if (window.grecaptcha && RECAPTCHA_SITE_KEY) {
+    if (window.grecaptcha && RECAPTCHA_SITE_KEY && recaptchaWidgetId.current !== null) {
       try {
-        recaptchaToken = window.grecaptcha.getResponse();
+        recaptchaToken = window.grecaptcha.getResponse(recaptchaWidgetId.current);
         if (!recaptchaToken) {
           setSubmitStatus({
             type: 'error',
@@ -88,9 +136,9 @@ const Contact = () => {
         setFormData({ name: '', email: '', message: '' });
         
         // Reset reCAPTCHA after successful submission
-        if (window.grecaptcha && RECAPTCHA_SITE_KEY) {
+        if (window.grecaptcha && RECAPTCHA_SITE_KEY && recaptchaWidgetId.current !== null) {
           try {
-            window.grecaptcha.reset();
+            window.grecaptcha.reset(recaptchaWidgetId.current);
           } catch (error) {
             // Ignore reset errors
           }
@@ -257,10 +305,12 @@ const Contact = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: 0.5 }}
               >
-                <div
-                  className="g-recaptcha"
-                  data-sitekey={RECAPTCHA_SITE_KEY}
-                ></div>
+                <div ref={recaptchaRef} id="recaptcha-widget"></div>
+                {!recaptchaLoaded && (
+                  <div style={{ color: '#666', fontSize: '14px', marginTop: '10px' }}>
+                    Loading reCAPTCHA...
+                  </div>
+                )}
               </motion.div>
             )}
             {submitStatus.type && (
