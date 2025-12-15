@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub } from 'react-icons/fa';
+import emailjs from '@emailjs/browser';
 
 // Xano Backend Configuration
 const API_BASE_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:WpZv-jLF';
@@ -8,6 +9,11 @@ const API_KEY = import.meta.env.VITE_API_KEY || '';
 
 // Google reCAPTCHA v3 Configuration
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+
+// EmailJS Configuration
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+const EMAILJS_USER_ID = import.meta.env.VITE_EMAILJS_USER_ID || '';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -120,9 +126,16 @@ const Contact = () => {
     };
 
     try {
-      // Submit form to database (matching Xano query: submit_form)
-      // Wrapping in form_submission as Xano query expects this variable structure
-      const response = await fetch(`${API_BASE_URL}/submit_form`, {
+      // Initialize EmailJS if credentials are available
+      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_USER_ID) {
+        emailjs.init(EMAILJS_USER_ID);
+      }
+
+      // Submit to both Xano (database) and EmailJS (email notification) in parallel
+      const promises = [];
+
+      // 1. Submit to Xano database
+      const xanoPromise = fetch(`${API_BASE_URL}/submit_form`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,28 +146,63 @@ const Contact = () => {
         credentials: 'omit',
         body: JSON.stringify(formSubmissionData),
       });
+      promises.push(xanoPromise);
 
-      const responseData = await response.json().catch(() => ({}));
-      
-      // Log full response for debugging (remove in production if needed)
-      if (!response.ok || !responseData.success) {
-        console.error('Xano API Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: responseData
-        });
+      // 2. Send email via EmailJS (if configured)
+      let emailjsPromise = null;
+      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_USER_ID) {
+        const emailjsTemplateParams = {
+          from_name: formData.name.trim(),
+          from_email: formData.email.trim().toLowerCase(),
+          message: formData.message.trim(),
+          to_name: 'Marshal Johnsan', // Your name
+        };
+
+        emailjsPromise = emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          emailjsTemplateParams,
+          EMAILJS_USER_ID
+        );
+        promises.push(emailjsPromise);
       }
+
+      // Wait for all promises to complete
+      const results = await Promise.allSettled(promises);
       
-      // Xano response structure: { success: true/false, message: "...", submission: {...} }
-      if (response.ok && responseData.success) {
+      // Check Xano response
+      const xanoResult = results[0];
+      let xanoSuccess = false;
+      let xanoResponseData = {};
+
+      if (xanoResult.status === 'fulfilled') {
+        const response = xanoResult.value;
+        xanoResponseData = await response.json().catch(() => ({}));
+        xanoSuccess = response.ok && xanoResponseData.success;
+      }
+
+      // Check EmailJS response (if it was sent)
+      let emailjsSuccess = true; // Default to true if EmailJS is not configured
+      if (emailjsPromise) {
+        const emailjsResult = results[1];
+        emailjsSuccess = emailjsResult.status === 'fulfilled';
+      }
+
+      // Determine overall success and message
+      if (xanoSuccess) {
+        // Xano succeeded - form is saved
+        const emailStatus = emailjsPromise 
+          ? (emailjsSuccess ? ' Email sent successfully!' : ' (Email notification failed, but your message was saved)')
+          : '';
+        
         setSubmitStatus({
           type: 'success',
-          message: responseData.message || 'Thank you for your message! I will get back to you soon.',
+          message: (xanoResponseData.message || 'Thank you for your message! I will get back to you soon.') + emailStatus,
         });
         setFormData({ name: '', email: '', message: '' });
       } else {
-        // Handle reCAPTCHA validation failure or other errors
-        const errorMessage = responseData.message || responseData.error || responseData.code || `Failed to save message. Status: ${response.status}`;
+        // Xano failed - show error
+        const errorMessage = xanoResponseData.message || xanoResponseData.error || xanoResponseData.code || 'Failed to save message. Please try again.';
         setSubmitStatus({
           type: 'error',
           message: errorMessage,
