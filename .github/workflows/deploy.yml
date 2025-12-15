@@ -46,8 +46,6 @@ jobs:
             echo "⚠️  WARNING: VITE_API_KEY is not set in GitHub Secrets"
           else
             echo "✅ VITE_API_KEY is set"
-            
-            ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
         env:
           RECAPTCHA_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
           API_KEY: ${{ secrets.VITE_API_KEY }}
