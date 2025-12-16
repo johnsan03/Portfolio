@@ -201,7 +201,9 @@ const Contact = () => {
       if (xanoResult.status === 'fulfilled') {
         const response = xanoResult.value;
         xanoResponseData = await response.json().catch(() => ({}));
-        xanoSuccess = response.ok && xanoResponseData.success;
+        // If response is 200 OK, consider it successful
+        // Only check xanoResponseData.success if it exists, otherwise assume success for 200 status
+        xanoSuccess = response.ok && (xanoResponseData.success !== false);
       }
 
       // Check EmailJS response (if it was sent)
@@ -425,10 +427,17 @@ const Contact = () => {
             {/* Modal */}
             <motion.div
               className={`status-modal ${submitStatus.type === 'success' ? 'success' : 'error'}`}
-              initial={{ opacity: 0, scale: 0.8, y: 50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 50 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
               transition={{ type: "spring", duration: 0.5 }}
+              style={{ 
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 9999
+              }}
             >
               <button
                 className="status-modal-close"
