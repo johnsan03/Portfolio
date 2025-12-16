@@ -2228,8 +2228,8 @@ section#skills {
   }
 }
 
-/* Success Modal/Popup Styles */
-.success-modal-backdrop {
+/* Status Modal/Popup Styles (Success & Error) */
+.status-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -2243,7 +2243,7 @@ section#skills {
   justify-content: center;
 }
 
-.success-modal {
+.status-modal {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -2260,7 +2260,7 @@ section#skills {
   position: relative;
 }
 
-.success-modal-close {
+.status-modal-close {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -2279,50 +2279,74 @@ section#skills {
   height: 36px;
 }
 
-.success-modal-close:hover {
+.status-modal-close:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
   transform: rotate(90deg);
 }
 
-.success-modal-icon {
+.status-modal-icon {
   width: 80px;
   height: 80px;
   margin: 0 auto 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.15));
   border-radius: 50%;
-  border: 3px solid rgba(34, 197, 94, 0.3);
+  border: 3px solid;
 }
 
-.success-modal-icon svg {
+.status-modal-icon.success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.15));
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.status-modal-icon.success svg {
   font-size: 3rem;
   color: #10b981;
   filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
 }
 
-.success-modal-title {
+.status-modal-icon.error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.15));
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.status-modal-icon.error svg {
+  font-size: 3rem;
+  color: #ef4444;
+  filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.4));
+}
+
+.status-modal-title {
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 1rem;
+}
+
+.status-modal.success .status-modal-title {
   background: linear-gradient(135deg, #10b981, #059669);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.success-modal-message {
+.status-modal.error .status-modal-title {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.status-modal-message {
   font-size: 1.1rem;
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 2rem;
 }
 
-.success-modal-button {
-  background: linear-gradient(135deg, #10b981, #059669);
+.status-modal-button {
   color: white;
   border: none;
   padding: 1rem 2.5rem;
@@ -2331,44 +2355,59 @@ section#skills {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.status-modal-button.success {
+  background: linear-gradient(135deg, #10b981, #059669);
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
 
-.success-modal-button:hover {
+.status-modal-button.success:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
   background: linear-gradient(135deg, #059669, #047857);
 }
 
-.success-modal-button:active {
+.status-modal-button.error {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.status-modal-button.error:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.status-modal-button:active {
   transform: translateY(0);
 }
 
-/* Responsive adjustments for success modal */
+/* Responsive adjustments for status modal */
 @media (max-width: 768px) {
-  .success-modal {
+  .status-modal {
     padding: 2.5rem 2rem;
     max-width: 90%;
   }
 
-  .success-modal-icon {
+  .status-modal-icon {
     width: 70px;
     height: 70px;
   }
 
-  .success-modal-icon svg {
+  .status-modal-icon svg {
     font-size: 2.5rem;
   }
 
-  .success-modal-title {
+  .status-modal-title {
     font-size: 1.75rem;
   }
 
-  .success-modal-message {
+  .status-modal-message {
     font-size: 1rem;
   }
 
-  .success-modal-button {
+  .status-modal-button {
     padding: 0.875rem 2rem;
     font-size: 0.95rem;
   }

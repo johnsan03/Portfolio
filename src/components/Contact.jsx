@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub, FaCheckCircle, FaTimes } from 'react-icons/fa';
+import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub, FaCheckCircle, FaTimes, FaExclamationCircle } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
 
 // Xano Backend Configuration
@@ -216,6 +216,9 @@ const Contact = () => {
         }
       }
 
+      // Clear form data immediately after submission (regardless of result)
+      setFormData({ name: '', email: '', message: '' });
+
       // Determine overall success and message
       if (xanoSuccess) {
         // Xano succeeded - form is saved
@@ -232,7 +235,6 @@ const Contact = () => {
           type: 'success',
           message: (xanoResponseData.message || 'Thank you for your message! I will get back to you soon.') + emailStatus,
         });
-        setFormData({ name: '', email: '', message: '' });
       } else {
         // Xano failed - show error
         const errorMessage = xanoResponseData.message || xanoResponseData.error || xanoResponseData.code || 'Failed to save message. Please try again.';
@@ -242,6 +244,9 @@ const Contact = () => {
         });
       }
     } catch (error) {
+      // Clear form data even on error
+      setFormData({ name: '', email: '', message: '' });
+      
       let errorMessage = 'Failed to send message. Please try again later.';
       
       if (error.text) {
@@ -387,17 +392,6 @@ const Contact = () => {
                 required
               />
             </motion.div>
-            {/* Error message inline (for form errors) */}
-            {submitStatus.type === 'error' && (
-              <motion.div
-                className={`form-status ${submitStatus.type}`}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {submitStatus.message}
-              </motion.div>
-            )}
             <motion.button
               type="submit"
               className="btn btn-primary"
@@ -415,13 +409,13 @@ const Contact = () => {
         </div>
       </div>
 
-      {/* Success Modal/Popup */}
+      {/* Success/Error Modal/Popup */}
       <AnimatePresence>
-        {submitStatus.type === 'success' && (
+        {submitStatus.type && (
           <>
             {/* Backdrop */}
             <motion.div
-              className="success-modal-backdrop"
+              className={`status-modal-backdrop ${submitStatus.type === 'success' ? 'success' : 'error'}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -430,14 +424,14 @@ const Contact = () => {
             
             {/* Modal */}
             <motion.div
-              className="success-modal"
+              className={`status-modal ${submitStatus.type === 'success' ? 'success' : 'error'}`}
               initial={{ opacity: 0, scale: 0.8, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 50 }}
               transition={{ type: "spring", duration: 0.5 }}
             >
               <button
-                className="success-modal-close"
+                className="status-modal-close"
                 onClick={() => setSubmitStatus({ type: null, message: '' })}
                 aria-label="Close"
               >
@@ -445,34 +439,36 @@ const Contact = () => {
               </button>
               
               <motion.div
-                className="success-modal-icon"
+                className={`status-modal-icon ${submitStatus.type === 'success' ? 'success' : 'error'}`}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               >
-                <FaCheckCircle />
+                {submitStatus.type === 'success' ? <FaCheckCircle /> : <FaExclamationCircle />}
               </motion.div>
               
               <motion.h3
-                className="success-modal-title"
+                className="status-modal-title"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Thank You!
+                {submitStatus.type === 'success' ? 'Thank You!' : 'Oops! Something Went Wrong'}
               </motion.h3>
               
               <motion.p
-                className="success-modal-message"
+                className="status-modal-message"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                {submitStatus.message || 'Your message has been sent successfully. I will get back to you soon!'}
+                {submitStatus.message || (submitStatus.type === 'success' 
+                  ? 'Your message has been sent successfully. I will get back to you soon!' 
+                  : 'Please try again later.')}
               </motion.p>
               
               <motion.button
-                className="success-modal-button"
+                className={`status-modal-button ${submitStatus.type === 'success' ? 'success' : 'error'}`}
                 onClick={() => setSubmitStatus({ type: null, message: '' })}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
