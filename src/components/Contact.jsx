@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub } from 'react-icons/fa';
+import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaLinkedin, FaGithub, FaCheckCircle, FaTimes } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
 
 // Xano Backend Configuration
@@ -387,7 +387,8 @@ const Contact = () => {
                 required
               />
             </motion.div>
-            {submitStatus.type && (
+            {/* Error message inline (for form errors) */}
+            {submitStatus.type === 'error' && (
               <motion.div
                 className={`form-status ${submitStatus.type}`}
                 initial={{ opacity: 0, y: -10 }}
@@ -413,6 +414,78 @@ const Contact = () => {
           </motion.form>
         </div>
       </div>
+
+      {/* Success Modal/Popup */}
+      <AnimatePresence>
+        {submitStatus.type === 'success' && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              className="success-modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSubmitStatus({ type: null, message: '' })}
+            />
+            
+            {/* Modal */}
+            <motion.div
+              className="success-modal"
+              initial={{ opacity: 0, scale: 0.8, y: 50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 50 }}
+              transition={{ type: "spring", duration: 0.5 }}
+            >
+              <button
+                className="success-modal-close"
+                onClick={() => setSubmitStatus({ type: null, message: '' })}
+                aria-label="Close"
+              >
+                <FaTimes />
+              </button>
+              
+              <motion.div
+                className="success-modal-icon"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <FaCheckCircle />
+              </motion.div>
+              
+              <motion.h3
+                className="success-modal-title"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Thank You!
+              </motion.h3>
+              
+              <motion.p
+                className="success-modal-message"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                {submitStatus.message || 'Your message has been sent successfully. I will get back to you soon!'}
+              </motion.p>
+              
+              <motion.button
+                className="success-modal-button"
+                onClick={() => setSubmitStatus({ type: null, message: '' })}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Close
+              </motion.button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
