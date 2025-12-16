@@ -224,18 +224,12 @@ const Contact = () => {
       // Determine overall success and message
       if (xanoSuccess) {
         // Xano succeeded - form is saved
-        let emailStatus = '';
-        if (isEmailJSConfigured) {
-          if (emailjsSuccess) {
-            emailStatus = ' Email notification sent successfully!';
-          } else {
-            emailStatus = ' (Email notification failed, but your message was saved to database)';
-          }
-        }
+        // Custom success message
+        const successMessage = 'I\'ll get back to you regarding your message ASAP. Now I am a little bit busy with coding 😊';
         
         setSubmitStatus({
           type: 'success',
-          message: (xanoResponseData.message || 'Thank you for your message! I will get back to you soon.') + emailStatus,
+          message: successMessage,
         });
       } else {
         // Xano failed - show error

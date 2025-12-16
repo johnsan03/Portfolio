@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { FaHeart } from 'react-icons/fa';
 import VisitCounter from './VisitCounter';
 
 const Footer = () => {
@@ -17,7 +16,7 @@ const Footer = () => {
           transition={{ duration: 0.6 }}
         >
           <p>
-            Made with <FaHeart className="heart-icon" /> by Marshal Johnsan
+            Turning ideas into code 💻 | Marshal Johnsan
           </p>
           <p>&copy; {currentYear} All rights reserved.</p>
         </motion.div>
