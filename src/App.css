@@ -809,6 +809,31 @@ section:nth-child(odd)::before {
   line-height: 1.2;
 }
 
+/* Games section title icon */
+.games-title-icon {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.9em;
+  vertical-align: -0.12em;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 10px 22px rgba(var(--accent-rgb), 0.22));
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .games-title-icon {
+    animation: gamesTitleIconFloat 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes gamesTitleIconFloat {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-3px) rotate(6deg); }
+}
+
 .section-title::before {
   content: attr(data-text);
   position: absolute;

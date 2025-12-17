@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCode, FaMemory, FaBug, FaTrophy, FaPlay, FaRedo, FaTimes, FaGamepad, FaHandRock, FaHandPaper, FaHandScissors, FaCircle } from 'react-icons/fa';
-
+import { GiSnake } from "react-icons/gi";
+import { SiXo } from "react-icons/si";
 const Games = () => {
   const [activeGame, setActiveGame] = useState(null);
 
@@ -30,7 +31,7 @@ const Games = () => {
     {
       id: 'tictactoe',
       name: 'Tic-Tac-Toe',
-      icon: <FaGamepad />,
+      icon: <SiXo />,
       description: 'Classic X and O game - Play against AI!',
       color: '#10b981'
     },
@@ -44,7 +45,7 @@ const Games = () => {
     {
       id: 'snake',
       name: 'Snake Game',
-      icon: <FaCircle />,
+      icon: <GiSnake />,
       description: 'Classic arcade game - Eat food and grow!',
       color: '#06b6d4'
     }
@@ -60,8 +61,8 @@ const Games = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          Developer Challenges
-        </motion.h2>
+          Developer Challenges <FaGamepad className="games-title-icon" />
+          </motion.h2>
         <motion.p
           className="section-subtitle"
           initial={{ opacity: 0, y: 20 }}
