@@ -10,7 +10,7 @@ A modern, professional portfolio website built with React, featuring interactive
 - 🎨 **Smooth Animations** - Powered by Framer Motion with scroll-triggered effects
 - 📱 **Fully Responsive** - Optimized for all devices (mobile, tablet, desktop)
 - ⚡ **Fast Performance** - Built with Vite for optimal speed and bundle size
-- 🎮 **Interactive Games** - Three fun developer challenges (no backend required)
+- 🎮 **Interactive Games** - Fun mini‑games and challenges (no backend required)
 - 🎭 **3D Background** - Dynamic particle system with interactive 3D shapes (full-page effect)
 - 🖼️ **Theme-Based Images** - Profile images that change based on theme with smooth transitions
 - 📜 **Single Page Scroll** - Continuous scrolling without internal scroll containers
@@ -22,7 +22,7 @@ A modern, professional portfolio website built with React, featuring interactive
 - **Skills Section** - Technical skills with progress indicators
 - **Education Section** - Timeline of educational background
 - **Quotes Section** - Random developer and fun quotes with toggle
-- **Developer Challenges** - Interactive games (Typing, Memory Match, Bug Hunter)
+- **Developer Challenges** - Interactive games (Typing, Memory Match, Bug Hunter, Tic‑Tac‑Toe, Rock‑Paper‑Scissors, Snake)
 - **Projects Section** - Featured projects with links and descriptions
 - **Contact Section** - Contact information and social media links
 - **Visit Counter** - Visitor statistics and likes counter
@@ -30,7 +30,7 @@ A modern, professional portfolio website built with React, featuring interactive
 
 ## 🎮 Interactive Games
 
-The portfolio includes three engaging games that showcase creativity:
+The portfolio includes several engaging games that showcase creativity:
 
 1. **Code Typing Challenge** - Test your typing speed with code snippets
    - Real-time WPM and accuracy tracking
@@ -49,6 +49,12 @@ The portfolio includes three engaging games that showcase creativity:
    - Animated bugs with rotation effects
    - Score and missed count tracking
    - Increasing difficulty
+
+4. **Tic‑Tac‑Toe** - Classic X/O (with AI mode)
+
+5. **Rock Paper Scissors** - Quick match against AI with a score + finish popup
+
+6. **Snake** - Classic arcade snake (finish popup shows score and length)
 
 ## 🗄️ Visitor Tracking & Likes
 
@@ -73,11 +79,10 @@ The portfolio uses a **Xano backend** for visitor tracking and likes management.
    Create or update `.env` file in the project root:
    ```env
    VITE_API_KEY=your-xano-api-key-here
-   VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key-here
    ```
    
    - Replace `your-xano-api-key-here` with your Xano API key (if required by your backend)
-   - Replace `your-recaptcha-site-key-here` with your Google reCAPTCHA Site Key (optional, for spam protection)
+   - If your Xano endpoints are public, you can leave `VITE_API_KEY` empty
 
 2. **Backend Configuration**:
    
@@ -98,27 +103,24 @@ The portfolio uses a **Xano backend** for visitor tracking and likes management.
 4. **That's It!** 🎉
    - Visitor tracking starts automatically on page load
    - Likes are managed through the backend API
-   - Contact form saves submissions to database
+   - Contact form saves submissions to the database
    - All data persists in the database
 
 ### Contact Form
 
-The contact form saves all submissions directly to your **Xano database** with optional **Google reCAPTCHA v2** spam protection:
+The contact form saves all submissions directly to your **Xano database** (no EmailJS / reCAPTCHA required).
 
 #### Features:
 - **Database Storage**: All form submissions saved to Xano `/submit_form` endpoint
-- **reCAPTCHA Protection**: Optional Google reCAPTCHA v2 spam protection
 - **Simple & Reliable**: Direct database storage without external dependencies
 - **Error Handling**: Clear error messages if submission fails
 - **Form Validation**: Client-side validation before submission
 
 #### How It Works:
 1. User fills out the contact form
-2. User completes reCAPTCHA verification (if enabled)
-3. Form data is sent to Xano API endpoint: `/submit_form`
-4. Data is saved to database with fields: `name`, `email`, `message`, `recaptcha_token`
-5. Success/error message displayed to user
-6. reCAPTCHA resets after successful submission
+2. Form data is sent to Xano API endpoint: `/submit_form`
+3. Data is saved to database with fields: `name`, `email`, `message`
+4. Success/error message displayed to user (modal)
 
 #### Form Data Structure:
 The form sends the following data to your Xano database:
@@ -126,32 +128,9 @@ The form sends the following data to your Xano database:
 {
   "name": "Sender's Name",
   "email": "sender@example.com",
-  "message": "Message content",
-  "recaptcha_token": "reCAPTCHA_token_here"
+  "message": "Message content"
 }
 ```
-
-#### reCAPTCHA Setup (Optional):
-1. **Get reCAPTCHA Site Key**:
-   - Visit [https://www.google.com/recaptcha/admin/create](https://www.google.com/recaptcha/admin/create)
-   - Sign in with your Google account
-   - Create a new site:
-     - **Label**: "Portfolio Contact Form"
-     - **reCAPTCHA type**: Select **"reCAPTCHA v2"** (checkbox)
-     - **Domains**: Add `localhost` (for dev) and your production domain
-   - Copy the **Site Key** (public key)
-
-2. **Add to Environment Variables**:
-   ```env
-   VITE_RECAPTCHA_SITE_KEY=your-site-key-here
-   ```
-
-3. **Backend Verification**:
-   - The `recaptcha_token` is sent with form data
-   - Verify the token on your Xano backend using the Secret Key
-   - Verification endpoint: `https://www.google.com/recaptcha/api/siteverify`
-
-**Note**: If `VITE_RECAPTCHA_SITE_KEY` is not set, the reCAPTCHA widget will not appear and the form will work without it.
 
 ## 🚀 Getting Started
 
@@ -207,7 +186,6 @@ npm run preview
    - Go to your repository → **Settings** → **Secrets and variables** → **Actions**
    - Click **New repository secret** and add:
      - `VITE_API_KEY` - Your Xano API key
-     - `VITE_RECAPTCHA_SITE_KEY` - Your Google reCAPTCHA Site Key (optional)
 
 2. **Enable GitHub Pages**:
    - Go to **Settings** → **Pages**
@@ -237,7 +215,6 @@ If you're deploying manually using `npm run deploy` (without GitHub Actions work
 1. **Create `.env` file locally** (this file is already in `.gitignore` - **NEVER commit it!**):
    ```env
    VITE_API_KEY=your-xano-api-key-here
-   VITE_RECAPTCHA_SITE_KEY=your-recaptcha-site-key-here
    ```
 
 2. **Build the project** (environment variables are embedded at build time):
@@ -287,7 +264,6 @@ If your deployed site is not working, check the following:
    Your `.env` should contain:
    ```env
    VITE_API_KEY=your-actual-api-key
-   VITE_RECAPTCHA_SITE_KEY=your-actual-site-key
    ```
 
 2. **Verify environment variables are in the build**:
@@ -309,7 +285,6 @@ If your deployed site is not working, check the following:
 
 4. **Common Issues**:
    - **API calls failing**: Check if `VITE_API_KEY` is set in `.env` and rebuild
-   - **reCAPTCHA not showing**: Check if `VITE_RECAPTCHA_SITE_KEY` is set in `.env`
    - **404 errors**: Verify `base: "/Portfolio/"` in `vite.config.js` matches your repository name
    - **CORS errors**: Make sure your Xano backend allows requests from your GitHub Pages domain
 

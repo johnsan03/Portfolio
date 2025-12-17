@@ -18,38 +18,39 @@ html {
 :root[data-theme='light'],
 html[data-theme='light'] {
   --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
+  /* Softer light theme (less bright) */
+  --bg-secondary: #f6f7fb;
+  --bg-tertiary: #eef1f7;
   --text-primary: #212529;
-  --text-secondary: #6c757d;
+  --text-secondary: #4b5563;
   --text-tertiary: #adb5bd;
-  --accent-primary: #6366f1;
-  --accent-secondary: #8b5cf6;
-  --accent-hover: #4f46e5;
-  --border-color: #dee2e6;
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+  --accent-primary: #0ea5e9;
+  --accent-secondary: #14b8a6;
+  --accent-hover: #0284c7;
+  --border-color: #e6eaf2;
+  --shadow-sm: 0 2px 8px rgba(17, 24, 39, 0.06);
+  --shadow-md: 0 12px 28px rgba(17, 24, 39, 0.10);
+  --shadow-lg: 0 18px 44px rgba(17, 24, 39, 0.12);
+  --shadow-xl: 0 30px 80px rgba(17, 24, 39, 0.14);
 }
 
 /* Dark mode variables - ensure they work with different selectors */
 :root[data-theme='dark'],
 html[data-theme='dark'] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
+  --bg-primary: #0b1220;
+  --bg-secondary: #0f1a2f;
+  --bg-tertiary: #15223b;
   --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --accent-primary: #818cf8;
-  --accent-secondary: #a78bfa;
-  --accent-hover: #6366f1;
-  --border-color: #334155;
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+  --text-secondary: #d6e3f0;
+  --text-tertiary: #9bb0c9;
+  --accent-primary: #38bdf8;
+  --accent-secondary: #2dd4bf;
+  --accent-hover: #0ea5e9;
+  --border-color: rgba(148, 163, 184, 0.22);
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 26px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.55);
+  --shadow-xl: 0 28px 70px rgba(0, 0, 0, 0.65);
 }
 
 body {

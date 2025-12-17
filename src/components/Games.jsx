@@ -11,14 +11,14 @@ const Games = () => {
       name: 'Code Typing Challenge',
       icon: <FaCode />,
       description: 'Type code snippets as fast as you can!',
-      color: '#6366f1'
+      color: 'var(--accent-primary)'
     },
     {
       id: 'memory',
       name: 'Memory Match',
       icon: <FaMemory />,
       description: 'Match pairs of tech stack cards',
-      color: '#8b5cf6'
+      color: 'var(--accent-secondary)'
     },
     {
       id: 'bug',
@@ -296,7 +296,7 @@ const TypingChallenge = ({ onBack }) => {
                       opacity: 1, 
                       y: 0,
                       scale: isCurrent ? 1.2 : 1,
-                      backgroundColor: isCurrent ? 'rgba(99, 102, 241, 0.2)' : 'transparent'
+                      backgroundColor: isCurrent ? 'rgba(14, 165, 233, 0.18)' : 'transparent'
                     }}
                     transition={{ duration: 0.2 }}
                   >
@@ -1077,7 +1077,7 @@ const RockPaperScissors = ({ onBack }) => {
       </div>
 
       <div className="rps-game" style={{ position: 'relative', zIndex: 1, minHeight: '400px' }}>
-        <div className="rps-actions">
+        {/* <div className="rps-actions">
           <motion.button
             type="button"
             className="restart-btn"
@@ -1099,7 +1099,7 @@ const RockPaperScissors = ({ onBack }) => {
           >
             <FaRedo /> Reset Match
           </motion.button>
-        </div>
+        </div> */}
 
         <AnimatePresence mode="wait">
           {!playerChoice ? (

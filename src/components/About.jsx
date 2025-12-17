@@ -77,6 +77,14 @@ const About = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
+              Since 2024, I’ve been working at <strong>M Data Zone</strong> as an <strong>Associate Software Engineer</strong>, where I collaborate with cross-functional teams to build and maintain production web applications, deliver clean and reliable features, and continuously improve performance, quality, and user experience.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+            >
               When I'm not coding, I enjoy contributing to open-source projects, reading
               tech blogs, and exploring new frameworks and tools that can improve my
               development workflow.

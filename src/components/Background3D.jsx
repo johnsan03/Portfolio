@@ -40,8 +40,8 @@ const Background3D = () => {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    const primaryColor = isDark ? 'rgba(129, 140, 248, ' : 'rgba(99, 102, 241, ';
-    const secondaryColor = isDark ? 'rgba(167, 139, 250, ' : 'rgba(139, 92, 246, ';
+    const primaryColor = isDark ? 'rgba(56, 189, 248, ' : 'rgba(14, 165, 233, ';
+    const secondaryColor = isDark ? 'rgba(45, 212, 191, ' : 'rgba(20, 184, 166, ';
     const tertiaryColor = isDark ? 'rgba(59, 130, 246, ' : 'rgba(37, 99, 235, ';
 
     // Enhanced 3D Particle class with better depth management
