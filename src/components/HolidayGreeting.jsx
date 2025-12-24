@@ -188,7 +188,11 @@ const HolidayGreeting = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
             >
-              Wishing you joy, success, and amazing adventures in 2026
+              Because nothing screams "holiday spirit" like a developer who codes even during Christmas 🎄
+              <br />
+              <span style={{ fontSize: '0.9em', opacity: 0.85, display: 'block', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                (Yes, I know it's Christmas. No, I'm not taking a break. Yes, I have a problem. Happy New Year! 🚀)
+              </span>
             </motion.p>
 
             <motion.button
