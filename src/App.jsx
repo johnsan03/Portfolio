@@ -11,12 +11,14 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import VisitCounter from './components/VisitCounter';
 import Background3D from './components/Background3D';
+import HolidayGreeting from './components/HolidayGreeting';
 import './App.css';
 
 function App() {
   return (
     <ThemeProvider>
       <div className="App">
+        <HolidayGreeting />
         <Background3D />
         <Header />
         <main>
