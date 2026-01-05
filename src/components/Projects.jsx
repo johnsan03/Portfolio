@@ -47,7 +47,7 @@ const Projects = () => {
          technologies: ['Next.Js', 'React', 'PostgresSQL', 'Replit'],
     //   github: 'https://github.com',
       demo: 'https://morty.empowerdemos.com/',
-      image: 'project4',
+      image: 'project5',
     },
     {
         title: 'SLUDI',
@@ -56,7 +56,7 @@ const Projects = () => {
         technologies: ['Java', 'MySql', 'Node'],
         // github: 'https://github.com',
         // demo: '',
-        image: 'project4',
+        image: 'project6',
       },
       {
         title: 'CatchCost',
@@ -65,7 +65,25 @@ const Projects = () => {
         technologies: ['React.js', 'AWS', 'ML'],
         // github: 'https://github.com',
         // demo: '',
-        image: 'project4',
+        image: 'project7',
+      },
+        {
+        title: 'Password Generator',
+        description:
+          'Developed a simple and secure password generator that runs entirely in the browser without using any backend services. The application is built using HTML, CSS, and JavaScript, ensuring fast performance and complete client-side execution. It allows users to generate strong, random passwords based on selected criteria such as length and character types. Since all logic runs in the browser, no data is stored or transmitted, enhancing user privacy and security. The project focuses on clean UI design, usability, and secure password generation practices.',
+        technologies: ['HTML', 'CSS', 'JavaScript'],
+         github: 'https://github.com/johnsan03/password-generator',
+        // demo: '',
+        image: 'project8',
+      },
+      {
+        title: 'Writing Studio',
+        description:
+        'Developed a content writing platform using Next.js that allows users to write blogs, short stories, or poems on topics of their choice. The application supports writing in Markdown, publishing content instantly, and reading it back in a clean, distraction-free reader view. The project focuses on providing a smooth writing experience, accurate Markdown rendering, and a modern, user-friendly interface for creating and consuming written content.',
+        technologies: ['HTML', 'CSS', 'JavaScript'],
+         github: 'https://github.com/johnsan03/blogs',
+         demo: 'https://johnsan03.github.io/blogs/',
+        image: 'project9',
       },
   ];
 
