@@ -23,10 +23,10 @@ const Projects = () => {
       image: 'project2',
     },
     {
-      title: 'Patisserie-Rolland',
+      title: 'FCP-Tires',
       description:
-        'Patisserie-Rolland is a WordPress project where I integrated the GoLivro delivery service through a custom-built plugin tailored to the client’s workflow. I managed theme translations using a POD file to ensure accurate multilingual content across the site. In addition, I performed ongoing content updates and implemented custom admin-panel functionalities to enhance usability and streamline site management.',
-      technologies: ['React', 'PHP', 'Wordpress', 'MySQL'],
+        'Worked on data cleaning and organization using Microsoft Access to structure raw datasets into clear tabular formats. The processed data was then analyzed and transformed into interactive visualizations using Power BI, enabling better insights and easy interpretation of the data.',
+      technologies: ['Power BI', 'Python', 'Access'],
     //   github: 'https://github.com',
     //   demo: 'https://demo.com',
       image: 'project3',

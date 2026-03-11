@@ -16,6 +16,7 @@ import {
   FaShoppingCart,
   FaWordpress,
   
+  
 } from 'react-icons/fa';
 import { SiTypescript, SiMongodb, SiPostgresql, SiPhp ,SiReplit,SiMysql,SiFirebase,SiSpringboot ,SiCanva ,SiAdobephotoshop,SiAndroidstudio} from 'react-icons/si';
 import { SiPostman } from "react-icons/si";
@@ -23,6 +24,7 @@ import { VscVscode } from "react-icons/vsc";
 import { FaFlutter } from "react-icons/fa6";
 import { RiNextjsFill } from "react-icons/ri";
 import { VscAzure } from "react-icons/vsc";
+import { FaChartSimple } from "react-icons/fa6";
 
 const Skills = () => {
 
@@ -71,12 +73,13 @@ const Skills = () => {
          { name: 'Photoshop', icon: <SiAdobephotoshop />, level: 75 },
          {name:'Postman', icon: <SiPostman/>, level: 75},        
          {name:'VS Code', icon: <VscVscode/>, level: 75},
-    
+        {name:'Power BI', icon: <FaChartSimple/>, level: 75},
          {name:'Android Studio', icon: <SiAndroidstudio/>, level: 75},
        
         
       ],
     },
+    
     {
       title: 'Others',
       skills: [
