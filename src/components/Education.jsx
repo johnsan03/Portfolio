@@ -20,6 +20,15 @@ const Education = () => {
       description: 'Completed    Secondary Education  with focus on Accounts and IT.',
       courses: ['Accounts', 'Information Technology', 'Business Statistics'],
     },
+     {
+      
+      degree: ' Language Proficiency',
+      institution: 'Alliance Française de Colombo ',
+      location: 'Barnes Pl, Colombo, Sri Lanka',
+      period: ' 1/2026 – 3/2026',
+      description: 'Completed    A1 level  with focus on French Language.',
+      courses: ['Speaking', 'Listening', 'Writing', 'Reading'],
+    },
   ];
 
   return (
