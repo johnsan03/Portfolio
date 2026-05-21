@@ -303,6 +303,23 @@ const fetchVisitors = async () => {
 };
 
 /**
+ * Total visitors = highest visitor record id, or row count if ids are missing.
+ * Each visitor row is one person; id reflects cumulative visitors when auto-incremented.
+ */
+const getTotalVisitorCount = (visitors) => {
+  if (!Array.isArray(visitors) || visitors.length === 0) {
+    return 0;
+  }
+
+  const maxId = visitors.reduce((max, visitor) => {
+    const id = Number(visitor.id ?? visitor.ID ?? 0);
+    return Number.isFinite(id) && id > max ? id : max;
+  }, 0);
+
+  return maxId > 0 ? maxId : visitors.length;
+};
+
+/**
  * Get counter stats from Xano backend (database only, with caching)
  * Fetches all counter records and calculates totals
  * Unique visitors count comes from backend (count of distinct visitor_id records)
@@ -332,17 +349,14 @@ const getCounterStats = async () => {
     // Unique visitors = count of distinct visitor_id records in database
     if (Array.isArray(visitors)) {
       uniqueVisits = visitors.length; // Each record is a unique visitor
-      
-      // Total visits = sum of all visit_count from all visitors
-      totalVisits = visitors.reduce((sum, visitor) => {
-        return sum + (visitor.visit_count || 1); // If visit_count exists, use it; otherwise assume 1
-      }, 0);
+      // Total visits = everyone who has visited (last id or record count, not visit_count sum)
+      totalVisits = getTotalVisitorCount(visitors);
     } else if (visitors && visitors.length !== undefined) {
       uniqueVisits = visitors.length;
     }
 
     return {
-      totalVisits: totalVisits || counterValue, // Use total visits from visitors, fallback to counter value
+      totalVisits,
       uniqueVisits: uniqueVisits,
       counterValue: counterValue,
     };
