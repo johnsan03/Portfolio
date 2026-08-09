@@ -9,57 +9,87 @@ import {
 import { SiLinkedin } from 'react-icons/si';
 
 const Certificates = () => {
-  // Replace sample entries with your real LinkedIn certificates.
-  // linkedinUrl: your certificate's public LinkedIn verification link
-  // pdf: optional path after upload, e.g. import from '../assets/certificates/my-cert.pdf'
+
   const certificates = [
     {
-      title: 'React.js Essential Training',
-      issuer: 'LinkedIn Learning',
-      date: 'March 2024',
-      skills: ['React', 'JavaScript', 'Frontend'],
-      linkedinUrl: 'https://www.linkedin.com/learning/certificates/sample-react-essential',
-      pdf: null,
+      title: 'Machine Learning Essentials for Business and Technical Decision Makers',
+      issuer: 'AWS Training and Certification',
+      date: 'June 2026',
+      skills: ['Business Intelligence', 'Technical Decision Making', 'Machine Learning', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications',
+      pdf: "src/assets/certificates/Business and Technical Decision Makers.pdf",
     },
     {
-      title: 'AWS Cloud Practitioner Essentials',
-      issuer: 'LinkedIn Learning',
-      date: 'January 2024',
-      skills: ['AWS', 'Cloud Computing', 'DevOps'],
-      linkedinUrl: 'https://www.linkedin.com/learning/certificates/sample-aws-cloud-practitioner',
-      pdf: null,
+      title: 'Getting Started with DevOps on AWS',
+      issuer: 'AWS Training and Certification',
+      date: 'June 2026',
+      skills: ['AWS', 'Cloud Computing', 'DevOps', 'Continuous Integration', 'Continuous Delivery'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/GettingStartedWithDevopsAWS.pdf",
     },
     {
-      title: 'JavaScript: The Complete Guide',
-      issuer: 'LinkedIn Learning',
-      date: 'November 2023',
-      skills: ['JavaScript', 'ES6', 'Web Development'],
-      linkedinUrl: 'https://www.linkedin.com/learning/certificates/sample-javascript-complete',
-      pdf: null,
+      title: 'Machine Learning Terminology and Process',
+      issuer: 'AWS Training and Certification',
+      date: 'June 2026',
+      skills: ['Machine Learning', 'Data Science', 'Python', 'Data Analysis', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/TerminologyAndProcess.pdf",
     },
     {
-      title: 'Node.js: Building RESTful APIs',
-      issuer: 'LinkedIn Learning',
-      date: 'September 2023',
-      skills: ['Node.js', 'REST API', 'Backend'],
-      linkedinUrl: 'https://www.linkedin.com/learning/certificates/sample-nodejs-rest-api',
-      pdf: null,
+      title: 'Introduction to Machine Learning: Art of the Possible',
+      issuer: 'AWS Training and Certification',
+      date: 'June 2026',
+      skills: ['Machine Learning', 'Data Science', 'Python', 'Data Analysis', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/MachineLearningArtOfThePossible.pdf",
     },
     {
-      title: 'Python for Data Science',
-      issuer: 'LinkedIn Learning',
-      date: 'June 2023',
-      skills: ['Python', 'Data Analysis', 'Machine Learning'],
-      linkedinUrl: 'https://www.linkedin.com/learning/certificates/sample-python-data-science',
-      pdf: null,
+      title: 'Planning a Machine Learning Project',
+      issuer: 'AWS Training and Certification',
+      date: 'June 2026',
+      skills: ['Machine Learning', 'Data Science', 'Python', 'Data Analysis', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/PlanningAMachine.pdf",
     },
     {
-      title: 'Git and GitHub Essential Training',
-      issuer: 'LinkedIn Learning',
-      date: 'April 2023',
-      skills: ['Git', 'GitHub', 'Version Control'],
-      linkedinUrl: 'https://www.linkedin.com/learning/certificates/sample-git-github',
-      pdf: null,
+      title: 'Machine Learning and AI Foundations: Recommendations',
+      issuer: 'AWS Training and Certification',
+      date: 'June 2026',
+      skills: [ 'Data Analysis', 'Machine Learning', 'AI', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/MachineLearningPLAN.pdf",
+    },
+    {
+      title: 'Claude 101: An Introduction to Claude AI',
+      issuer: 'Anthropic',
+      date: 'July 2026',
+      skills: ['AI', 'Machine Learning', 'Natural Language Processing', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/Claude101.pdf",
+    },
+    {
+      title: 'Claude Code 101: An Introduction to Claude AI for Developers',
+      issuer: 'Anthropic',
+      date: 'August 2026',
+      skills: ['AI', 'Machine Learning', 'Natural Language Processing', 'Cloud Computing', 'Software Development'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/ClaudeCode101.pdf",
+    },
+     {
+      title: 'Intro to Claude AI',
+      issuer: 'Anthropic',
+      date: 'August 2026',
+      skills: ['AI', 'Machine Learning', 'Natural Language Processing', 'Cloud Computing'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/IntroToClaudeAI.pdf",
+    },
+     {
+      title: 'AI Fluency for Educators',
+      issuer: 'Anthropic',
+      date: 'July 2026',
+      skills: ['AI', 'Machine Learning', 'Natural Language Processing', 'Cloud Computing', 'Education'],
+      linkedinUrl: 'https://www.linkedin.com/in/johnsan-marshal-a1307535a/details/certifications/',
+      pdf: "src/assets/certificates/AiFluencyForEducators.pdf",
     },
   ];
 
@@ -109,10 +139,7 @@ const Certificates = () => {
                     <h3 className="certificate-preview-title">{cert.title}</h3>
                     <p className="certificate-preview-issuer">{cert.issuer}</p>
                   </div>
-                  <div className="certificate-preview-footer">
-                    <FaFilePdf className="certificate-pdf-icon" />
-                    <span>PDF preview coming soon</span>
-                  </div>
+                  
                 </div>
               </div>
 
