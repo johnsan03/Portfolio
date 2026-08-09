@@ -3,6 +3,14 @@ import { FaGraduationCap, FaCalendarAlt, FaMapMarkerAlt } from 'react-icons/fa';
 
 const Education = () => {
   const educationData = [
+     {
+      degree: 'MSC in Cyber Security',
+      institution: 'ANC College of Higher Education',
+      location: 'Colombo, Sri Lanka',
+      period: '2026 - present',
+      description: 'Pursuing a Master of Science in Cyber Security, focusing on advanced topics in information security, network security, and ethical hacking.',
+      courses: ['Information Security', 'Network Security', 'Ethical Hacking', 'Cryptography'],
+    },
     {
       degree: 'Bachelor Software Engineering',
       institution: 'Informatics Institute of Technology',
