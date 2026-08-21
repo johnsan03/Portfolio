@@ -52,6 +52,9 @@ html {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  /* html owns the scrollport; body must NOT be a scroll container or
+     position: sticky (used by the section bridges) silently stops working. */
+  overflow-y: scroll;
 }
 
 body {
@@ -63,8 +66,9 @@ body {
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   line-height: 1.6;
-  overflow-x: hidden;
-  overflow-y: scroll;
+  /* `clip` (not `hidden`) so descendants can still use position: sticky */
+  overflow-x: clip;
+  overflow-y: visible;
   -webkit-tap-highlight-color: transparent;
   width: 100%;
   max-width: 100vw;
@@ -110,7 +114,8 @@ html[data-theme='dark'] {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`) so the section bridges can use position: sticky */
+  overflow-x: clip;
   overflow-y: visible;
   width: 100%;
   max-width: 100vw;
@@ -139,9 +144,9 @@ html[data-theme='dark'] {
 }
 
 :root[data-theme='light'] .background-3d {
-  mix-blend-mode: normal;
-  /* Reduce “harsh” contrast in light mode so it doesn’t look too bright */
-  filter: contrast(1.05) brightness(0.98) saturate(1.02);
+  mix-blend-mode: multiply; /* darkens onto paper instead of washing out */
+  /* Deepen it so the particle field actually reads against a near-white page. */
+  filter: contrast(1.18) saturate(1.25);
 }
 
 :root[data-theme='dark'] .background-3d {
@@ -725,6 +730,65 @@ html[data-theme='dark'] {
   top: 8px;
   left: 50%;
   transform: translateX(-50%);
+}
+
+/* Section Scroll Transitions
+   The reveal is applied to the section itself, so it adds no page height.
+   Only the thin bolt rule between sections occupies any space. */
+.fx-reveal {
+  position: relative;
+}
+
+.fx-reveal__fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.fx-divider {
+  position: relative;
+  z-index: 5;
+  height: 70px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fx-divider svg {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 44px;
+}
+
+.fx-divider__bolt {
+  stroke: var(--accent-primary);
+  stroke-width: var(--fx-divider-w, 1.4);
+  fill: none;
+  opacity: var(--fx-divider-opacity, 0.5);
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+}
+
+.fx-divider.is-on .fx-divider__bolt {
+  animation: fx-bolt-draw 1.1s ease-out forwards;
+}
+
+@keyframes fx-bolt-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@media (max-width: 768px) {
+  .fx-divider { height: 52px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-reveal { clip-path: none !important; }
+  .fx-divider__bolt { stroke-dashoffset: 0; animation: none; }
 }
 
 /* Section Styles */
@@ -4848,12 +4912,19 @@ section#skills {
     padding: 3rem 0;
   }
 }
+.profile-photo-wrap {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+}
+
 .profile-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  will-change: transform, opacity, filter;
+  display: block;
 }

@@ -15,13 +15,26 @@ const Background3D = () => {
     let shapes = [];
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
-    let scrollY = 0;
 
+    // Assigned once the Particle/Shape3D classes below exist. resizeCanvas is
+    // declared before them, so it reaches the seeder through this binding.
+    let seed = null;
+
+    // The canvas is position:fixed and displayed at 100vw x 100vh, so the
+    // backing store only ever needs to be viewport-sized. It used to be set to
+    // document.scrollHeight (~20000px tall), which allocated and cleared tens
+    // of millions of pixels per frame that were then scaled down out of view.
     const resizeCanvas = () => {
-      const width = Math.min(window.innerWidth, document.documentElement.clientWidth);
-      const height = document.documentElement.scrollHeight || document.body.scrollHeight || window.innerHeight;
-      canvas.width = width;
-      canvas.height = Math.max(height, window.innerHeight);
+      const w = Math.min(window.innerWidth, document.documentElement.clientWidth) || window.innerWidth;
+      const h = window.innerHeight;
+      if (!w || !h) return false;
+      if (canvas.width === w && canvas.height === h) return false;
+      canvas.width = w;
+      canvas.height = h;
+      // Particle positions are absolute, so a new canvas size means the field
+      // has to be laid out again -- including the 0x0 -> real first sizing.
+      if (seed) seed();
+      return true;
     };
 
     resizeCanvas();
@@ -34,15 +47,9 @@ const Background3D = () => {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    // Track scroll to adjust animation
-    const handleScroll = () => {
-      scrollY = window.scrollY;
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    const primaryColor = isDark ? 'rgba(56, 189, 248, ' : 'rgba(14, 165, 233, ';
-    const secondaryColor = isDark ? 'rgba(45, 212, 191, ' : 'rgba(20, 184, 166, ';
-    const tertiaryColor = isDark ? 'rgba(59, 130, 246, ' : 'rgba(37, 99, 235, ';
+    const primaryColor = isDark ? 'rgba(56, 189, 248, ' : 'rgba(3, 105, 161, ';
+    const secondaryColor = isDark ? 'rgba(45, 212, 191, ' : 'rgba(15, 118, 110, ';
+    const tertiaryColor = isDark ? 'rgba(59, 130, 246, ' : 'rgba(29, 78, 216, ';
 
     // Enhanced 3D Particle class with better depth management
     class Particle {
@@ -176,7 +183,7 @@ const Background3D = () => {
         } else {
           this.type = 'ring';
         }
-        const shapeOpacity = isDark ? '0.12' : '0.2';
+        const shapeOpacity = isDark ? '0.12' : '0.28';
         const colorRand = Math.random();
         if (colorRand < 0.4) {
           this.color = primaryColor + shapeOpacity + ')';
@@ -336,16 +343,26 @@ const Background3D = () => {
       }
     }
 
-    // Initialize particles and shapes with optimized counts
-    for (let i = 0; i < 70; i++) {
-      particles.push(new Particle());
-    }
-
-    for (let i = 0; i < 12; i++) {
-      shapes.push(new Shape3D());
-    }
+    // Particles spawn at random points across the canvas, so they must be
+    // seeded *after* it has real dimensions. At mount the canvas can still be
+    // 0x0 (hidden tab, pre-render), which would drop all 70 onto (0,0) and
+    // leave the field empty for the life of the page.
+    let seededW = 0;
+    let seededH = 0;
+    seed = () => {
+      particles = [];
+      shapes = [];
+      for (let i = 0; i < 70; i++) particles.push(new Particle());
+      for (let i = 0; i < 12; i++) shapes.push(new Shape3D());
+      seededW = canvas.width;
+      seededH = canvas.height;
+    };
+    seed();
 
     const animate = () => {
+      if (canvas.width && canvas.height && (canvas.width !== seededW || canvas.height !== seededH)) {
+        seed();
+      }
       // Clear canvas for fresh frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
@@ -365,7 +382,7 @@ const Background3D = () => {
 
           // Only connect particles that are in mid-to-far depth and close together
           if (distance < 120 && p1.z > 400 && p2.z > 400 && p1.z < 1800 && p2.z < 1800) {
-            const baseOpacity = isDark ? 0.15 : 0.25;
+            const baseOpacity = isDark ? 0.15 : 0.38;
             const opacity = (1 - distance / 120) * baseOpacity * (1 - Math.abs(p1.z - p2.z) / 1400);
             ctx.strokeStyle = primaryColor + opacity + ')';
             ctx.lineWidth = isDark ? 0.8 : 1.2;
@@ -393,11 +410,29 @@ const Background3D = () => {
     };
 
     animate();
+    // Cheap guard: layout can be unavailable at mount (hidden tab, pre-render),
+    // leaving a 0x0 canvas that no resize event would ever correct.
+    const sizeGuard = setInterval(() => {
+      if (!canvas.width || !canvas.height) resizeCanvas();
+      else clearInterval(sizeGuard);
+    }, 250);
+
+    // Don't burn frames painting a background nobody is looking at.
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      } else if (!animationFrameId) {
+        animate();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
+      clearInterval(sizeGuard);
+      document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
   }, [isDark]);
@@ -415,8 +450,7 @@ const Background3D = () => {
         zIndex: -1,
         pointerEvents: 'none',
         touchAction: 'none',
-        opacity: isDark ? 0.4 : 0.35,
-        willChange: 'contents',
+        opacity: isDark ? 0.4 : 0.55,
       }}
     />
   );

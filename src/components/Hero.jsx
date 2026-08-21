@@ -2,12 +2,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaGithub, FaLinkedin, FaEnvelope, FaDownload } from 'react-icons/fa';
 import { useTheme } from '../context/ThemeContext';
 import resumePdf from '../assets/Marshal-Johnsan_Resume (1).pdf';
-import profileImageLight from '../assets/Light.png';
-import profileImageDark from '../assets/Dark.png';
+import profileLightWebp from '../assets/profile-light.webp';
+import profileLightPng from '../assets/profile-light.png';
+import profileDarkWebp from '../assets/profile-dark.webp';
+import profileDarkPng from '../assets/profile-dark.png';
 
 const Hero = () => {
   const { isDark } = useTheme();
-  const profileImage = isDark ? profileImageDark : profileImageLight;
+  const profileWebp = isDark ? profileDarkWebp : profileLightWebp;
+  const profilePng = isDark ? profileDarkPng : profileLightPng;
   
   // Animation variants for theme transition
   const imageVariants = {
@@ -134,11 +137,9 @@ const Hero = () => {
         style={{ perspective: '1000px' }}
       >
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.picture
             key={isDark ? 'dark' : 'light'}
-            src={profileImage}
-            alt="Profile"
-            className="profile-photo"
+            className="profile-photo-wrap"
             variants={imageVariants}
             initial="initial"
             animate="animate"
@@ -151,7 +152,18 @@ const Hero = () => {
               rotateY: { duration: 0.5 },
               filter: { duration: 0.3 }
             }}
-          />
+          >
+            <source srcSet={profileWebp} type="image/webp" />
+            <img
+              src={profilePng}
+              alt="Marshal Johnsan"
+              className="profile-photo"
+              width="600"
+              height="600"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </motion.picture>
         </AnimatePresence>
       </motion.div>
     </motion.div>
