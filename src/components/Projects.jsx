@@ -73,7 +73,7 @@ const Projects = () => {
           'Developed a simple and secure password generator that runs entirely in the browser without using any backend services. The application is built using HTML, CSS, and JavaScript, ensuring fast performance and complete client-side execution. It allows users to generate strong, random passwords based on selected criteria such as length and character types. Since all logic runs in the browser, no data is stored or transmitted, enhancing user privacy and security. The project focuses on clean UI design, usability, and secure password generation practices.',
         technologies: ['HTML', 'CSS', 'JavaScript'],
          github: 'https://github.com/johnsan03/password-generator',
-        // demo: '',
+        demo: 'https://password-generator-dusky-eta.vercel.app/',
         image: 'project8',
       },
       {
