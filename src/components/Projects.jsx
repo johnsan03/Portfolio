@@ -76,6 +76,15 @@ const Projects = () => {
         demo: 'https://password-generator-dusky-eta.vercel.app/',
         image: 'project8',
       },
+       {
+        title: 'Hash Generator',
+        description:
+          'Developed a simple and secure hash generator that runs entirely in the browser without using any backend services. The application is built using HTML, CSS, and JavaScript, ensuring fast performance and complete client-side execution. It allows users to generate strong, random hashes based on selected criteria such as algorithm and length. Since all logic runs in the browser, no data is stored or transmitted, enhancing user privacy and security. The project focuses on clean UI design, usability, and secure hash generation practices.',
+        technologies: ['HTML', 'CSS', 'JavaScript'],
+         github: 'https://github.com/johnsan03/hash-generator',
+        demo: 'https://hash-generater.vercel.app',
+        image: 'project8',
+      },
       {
         title: 'Writing Studio',
         description:
